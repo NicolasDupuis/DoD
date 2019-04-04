@@ -55,11 +55,20 @@ class DockerAPI(object):
         self.stdout = externalCmd("docker inspect " + container_id)
         return pd.read_json(self.stdout)
 
+    def volumeDetails(self, volume_id):
+        # Create a Dataframe listing details of a specific docker instance
+        self.stdout = externalCmd("docker volume inspect " + volume_id)
+        return pd.read_json(self.stdout)
 
     def listInstances(self):
         # Create a Dataframe listing all the docker instances
         self.stdout = externalCmd("docker ps")
         return pd.read_fwf(StringIO(self.stdout), widths=[20, self.longestContainerName(), 20, 20, 20, 20, 20])
+
+    def listVolumes(self):
+        # Create a Dataframe listing all the docker volumes
+        self.stdout = externalCmd("docker volume ls")
+        return pd.read_fwf(StringIO(self.stdout), widths=[20, 64])
 
     def pullImage(self, image):
 
@@ -72,11 +81,24 @@ class DockerAPI(object):
         except:
             pass
 
+    def createVolume(self, volume):
+        try:
+            self.stdout = externalCmd("docker volume create " + volume)
+        except:
+            pass
+
     def removeImage(self, image):
         try:
             externalCmd("docker rmi --force " + image)
         except:
             pass
+
+    def deleteVolume(self, volume_id):
+        try:
+            externalCmd("docker volume rm " + volume_id)
+        except:
+            pass
+
 
     def pauseInstance(self, container_id):
         try:
@@ -117,16 +139,15 @@ class DockerAPI(object):
                 externalCmdLive(self.cmd_run)
         else:
             # stuff to open directly in a terminal
-            externalCmdLive(glob.launchCommands[image][1])
+            externalCmdLive(glob.launchCommands[image][0])
 
     # container already created but closed. User wants to re-open it
     def openInstance(self, container_id):
-        # let's see if that container has exposed a port, if so, let's run it
-        self.details = dockerAPI.instanceDetails(container_id)["Config"].to_dict()
+
         try:
-            self.port = self.details[0]["8787/tcp"][0]["HostPort"]
-            print("port" + self.port)
-            #self.port = str(list(self.details[0]["HostConfig"])[0]).split("/")[0]
+            # let's see if that container has exposed a port, if so, let's run it
+            self.details = dockerAPI.instanceDetails(container_id)["HostConfig"].to_dict()
+            self.port = self.details[0]["PortBindings"]["8787/tcp"][0]["HostPort"]
             print("Re-opening container " + str(container_id) + " on " + self.port)
             externalCmdLive(glob.internerBrowser + " http://127.0.0.1:" + self.port + "/")
         except:

@@ -48,7 +48,7 @@ class Glob(object):
         # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
         self.launchCommands = {}
         self.launchCommands["rocker/verse"] = ["docker run --rm -dp <port>:8787 -e PASSWORD=<password> rocker/verse", self.internerBrowser + " http://127.0.0.1:<port>/"]
-        self.launchCommands["jupyter/scipy-notebook"] = ["docker run -p <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>"]
+        self.launchCommands["jupyter/scipy-notebook"] = ["docker run -dp <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>"]
         self.launchCommands["r-base"] = ['konsole -e docker run -ti --rm r-base']
         self.launchCommands["alpine"] = ["konsole -e docker run -ti --rm alpine"]
 
@@ -162,7 +162,7 @@ class Webpages(object):
 
         if actions == "open":
             dockerAPI.openInstance(container_id)
-        if actions == "stop":
+        elif actions == "stop":
             dockerAPI.stopInstance(container_id)
         elif actions == "pause":
             dockerAPI.pauseInstance(container_id)
@@ -181,6 +181,46 @@ class Webpages(object):
         html_code += footer_layout()
         return html_code
     actionsInstance.exposed = True
+
+
+    # Volumes library
+    ########################################################################
+
+    # page listing all the docker volumes available
+    def volumeslibrary(self, volume_id=None):
+        html_code  = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
+        if volume_id == None:
+            html_code += dockerVolumes_layout(self.username, role=self.role)
+        else:
+            html_code += dockerVolumes_layout(self.username, role=self.role, volume_id=volume_id)
+        html_code += footer_layout()
+        return html_code
+    volumeslibrary.exposed = True
+
+    # Actions on an active Docker instances: stop, pause, unpause, restart or get lower level details
+    def actionsVolume(self, **kwargs):
+
+        actions, volume_id = list(kwargs.keys())[0].split("@")
+
+        if actions == "details":
+            dockerAPI.volumeDetails(volume_id)
+        elif actions == "delete":
+            dockerAPI.deleteVolume(volume_id)
+        elif actions == "create":
+            dockerAPI.createVolume(kwargs["create@na"])
+
+        html_code  = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
+        if actions == "details":
+            html_code += dockerVolumes_layout(self.username, role=self.role, volume_id=volume_id)
+        else:
+            html_code += dockerVolumes_layout(self.username, role=self.role)
+        html_code += footer_layout()
+        return html_code
+    actionsVolume.exposed = True
 
 
 # Global objects

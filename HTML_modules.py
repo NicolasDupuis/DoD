@@ -33,8 +33,10 @@ def sidebar_layout(username, role, current):
         color[0] = "w3-blue"
     elif current == "dockerInstances":
         color[1] = "w3-blue"
-    elif current == "usersMgmt":
+    elif current == "volumeslibrary":
         color[2] = "w3-blue"
+    elif current == "usersMgmt":
+        color[3] = "w3-blue"
 
     if role == glob.roles[0]:  # users
         sections = '<a href="dockerlibrary"   class="w3-bar-item w3-button w3-padding ' + color[0] + '"><i class="fa fa-eye fa-fw">   </i>  Images library</a>'
@@ -43,7 +45,8 @@ def sidebar_layout(username, role, current):
     elif role == glob.roles[1]:  # admin
         sections = '<a href="dockerlibrary" class="w3-bar-item w3-button w3-padding ' + color[0] + '"><i class="fa fa-eye fa-fw">   </i>  Images library</a>'
         sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><i class="fa fa-users fa-fw"> </i>  Active containers</a>'
-        sections += '<a href="usersMgmt" class="w3-bar-item w3-button w3-padding    ' + color[2] + '"><i class="fa fa-eye fa-fw"></i>  Users management</a>'
+        sections += '<a href="volumeslibrary" class="w3-bar-item w3-button w3-padding ' + color[2] + '"><i class="fa fa-users fa-fw"> </i>  Volumes library</a>'
+        sections += '<a href="usersMgmt" class="w3-bar-item w3-button w3-padding    ' + color[3] + '"><i class="fa fa-eye fa-fw"></i>  Users management</a>'
 
     return '''
     <!-- Sidebar/menu -->
@@ -217,6 +220,78 @@ def dockerInstances_layout(username, role, container_id=None):
         html_code += "There are no docker instances available at this point."
 
     return html_code
+
+
+def dockerVolumes_layout(username, role, volume_id=None):
+
+    # fnd all the active docker instances, get a dataframe with high level details
+    volumes = dockerAPI.listVolumes()
+
+    # build HTML code
+    html_code = '''
+      <!-- !PAGE CONTENT! -->
+      <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+      <!-- Header -->
+      <header class="w3-container" style="padding-top:22px">
+       <h5><b><i class="fa fa-dashboard"></i> Docker volumes</b></h5>
+      </header>
+      '''
+
+    if len(volumes) > 0:
+        html_code += '''
+      <div class="w3-container">
+      <form action="/actionsVolume">
+        <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+        <tr><th>DRIVER</th>
+            <th>VOLUME NAME</th>            
+        </tr>'''
+        for i in range(len(volumes)):
+            html_code += "<tr><td>" + str(volumes.loc[i][0]) + "</td>"
+            html_code += "    <td>" + str(volumes.loc[i][1]) + "</td>"
+            html_code += '''  <td> <input type="submit" name = "details@''' + str(volumes.loc[i][1]) + '''" value="Details">  '''
+            html_code += '''       <input type="submit" name = "delete@''' + str(volumes.loc[i][1]) + '''" value="Delete">  '''
+            html_code += "</td></tr>"
+
+        html_code += "</table></form><br>"
+
+        html_code += '''
+         <form action ="/actionsVolume" method = GET>
+           Create a new volume, please enter a name:
+           <table>
+            <tr><td><input name = "create@na"></td>
+            <td><input type=submit class="button" value="Create!"></td></tr>
+           </table >
+           </form>
+           '''
+
+        if volume_id != None:
+
+            html_code += ''' 
+              Details for volume <strong>''' + volume_id  + ''' </strong>:
+              <div class="w3-container">
+               <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+              <tr>
+             <th>Item</th>
+             <th>Value</th>                
+             </tr><tr> '''
+
+            details = dockerAPI.volumeDetails(volume_id)  # get a dataframe
+            for i in range(len(details.columns)):
+                _items = ""
+                if isinstance(details.loc[0][i], dict):
+                    for item in details.loc[0][i] :
+                        _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
+                else:
+                    _items = str(details.loc[0][i])
+
+                html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
+                html_code += "    <td>" + _items + "</td></tr>"
+
+    else:
+        html_code += "There are no docker volumes available at this point."
+
+    return html_code
+
 
 
 def footer_layout():
