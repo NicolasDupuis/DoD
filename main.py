@@ -58,19 +58,37 @@ class Webpages(object):
     # HTTP request objects
 
     def index(self):
-        return '''
-         <img src="/static/d-wise-logo.jpg" alt="Logo" />
-         <form action ="/login" method = GET>
-          <h4> Welcome to 'd-wise on demand'. Please enter your credentials:</h4>
-          <table>
-            <tr><td>Name</td><td><input name = "username"></td> </tr>
-            <tr><td>Password</td><td><input type="password" name="userpassword"></td></tr>
 
-          </table>
-          <input type=submit class="button" value="Login">
-         </form>
-          <img src="/static/background2.jpg"/>
-         <p><a href="http://www.d-wise.com">Visit d-wise.com!</a></p>          '''
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+
+        html_code += '''<br><br><br><br>  
+        
+        
+        <center><img src="/static/d-wise-logo.jpg" alt="Logo" /><br>
+         <form action ="/login" method = GET>
+          <h3> Welcome to <strong>d-wise on demand </strong></h3>
+          <h5> - a prototype by Nicolas and Andy -</h3>
+          
+        <table style="width:30%">
+          <tr>
+            <th>Name</th>
+            <td><td><input name = "username"></td>
+          </tr>
+          <tr>
+            <th>Password</th>
+            <td><td><input type="password" name="userpassword"></td>
+          </tr>
+        </table><br>
+        <input type=submit class="button" value="Login">
+
+         </form>          
+         <p><a href="http://www.d-wise.com">Visit d-wise.com!</a></p></center>'''
+
+        html_code += footer_layout()
+
+        return html_code
+
     index.exposed = True
 
     def login(self, username, userpassword):
