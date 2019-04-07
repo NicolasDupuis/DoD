@@ -65,10 +65,10 @@ class Webpages(object):
         html_code += '''<br><br><br><br>  
         
         
-        <center><img src="/static/d-wise-logo.jpg" alt="Logo" /><br>
+        <center><img src="/static/d-wise-logo.jpg" alt="Logo" style="width:400px;border:0;"><br>
          <form action ="/login" method = GET>
           <h3> Welcome to <strong>d-wise on demand </strong></h3>
-          <h5> - a prototype by Nicolas and Andy -</h3>
+          <h5> - a prototype by Nicolas and Andy -</h3><br>
           
         <table style="width:30%">
           <tr>
