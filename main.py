@@ -46,11 +46,11 @@ class Glob(object):
 
         # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
         self.launchCommands = {}
-        self.launchCommands["rocker/rstudio"] = ["docker run --name <userid>_rstudio --rm -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", self.internerBrowser + " http://127.0.0.1:<port>/"]
-        self.launchCommands["jupyter/scipy-notebook"] = ["docker run --name <userid>_Jupyter -dp <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>"]
-        self.launchCommands["r-base"] = ['konsole -e docker run --name <userid>_r -ti --rm r-base']
-        self.launchCommands["alpine"] = ["konsole -e docker run --name <userid>_alpine -ti --rm alpine"]
-        self.launchCommands["hello-world"] = ["konsole -e docker run --name <userid>_Helloworld -ti --rm hello-world"]
+        self.launchCommands["rocker/rstudio"] = ["docker run --name <userid>_rstudio<#n#> --rm -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", self.internerBrowser + " http://127.0.0.1:<port>/", "rstudio"]
+        self.launchCommands["jupyter/scipy-notebook"] = ["docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>", "Jupyter"]
+        self.launchCommands["r-base"] = ['konsole -e docker run --name <userid>_r<#n#> -ti --rm r-base', "R"]
+        self.launchCommands["alpine"] = ["konsole -e docker run --name <userid>_alpine<#n#> -ti --rm alpine", "Alpine"]
+        self.launchCommands["hello-world"] = ["konsole -e docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", "HelloWorld"]
 
         self.ports = []
 
@@ -141,7 +141,7 @@ class Webpages(object):
                 html_code += dockerImages_layout(self.username, role=self.role, image=image)
 
         elif actions == "run":
-            dockerAPI.instantiatelImage(image, self.username, self.userpassword)
+            dockerAPI.instantiatelImage(image, role=self.role, username = self.username, userpassword=self.userpassword)
             html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
             html_code += dockerInstances_layout(self.username, role=self.role)
 

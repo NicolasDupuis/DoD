@@ -57,9 +57,6 @@ class DockerAPI(object):
 
             self.details = dockerAPI.instanceDetails(self.instance).to_dict()
 
-            print("Username: " + str(username))
-            print("name: " + str(self.details["Name"][0][1:]))
-
             # Admins: shows all containers. Users: only show theirs
             if role == glob.roles[1] or username in self.details["Name"][0][1:]:
 
@@ -143,16 +140,30 @@ class DockerAPI(object):
             pass
 
     # User requested to instantiate an image
-    def instantiatelImage(self, image, username, userpassword):
+    def instantiatelImage(self, image, role, username, userpassword):
+
+        self.cmd_create = glob.launchCommands[image][0]
+
+        if "<userid>" in self.cmd_create:
+            self.cmd_create = self.cmd_create.replace("<userid>", username)
+
+        # pattern for container naming
+        if "<#n#>" in self.cmd_create:
+            self.instances = dockerAPI.listInstances(role=role, username=username)
+            self.instances = sorted([instance for instance in list(self.instances["Names"]) if glob.launchCommands[image][2] in instance])
+
+            if len(self.instances) == 0:  # no container for this image yet
+                self.container_n = "-1"
+            else:
+                self.container_n = "-" + str(int(self.instances[-1].split("-")[1]) + 1)
+
+            self.cmd_create = self.cmd_create.replace("<#n#>", self.container_n)
+
 
         # Create the instance.
         if len(glob.launchCommands[image]) > 1:
 
-            self.cmd_create = glob.launchCommands[image][0]
             self.cmd_run = glob.launchCommands[image][1]
-
-            if "<userid>" in self.cmd_create:
-                self.cmd_create = self.cmd_create.replace("<userid>", username)
 
             if "<password>" in self.cmd_create:
                 self.cmd_create = self.cmd_create.replace("<password>", userpassword)
@@ -166,7 +177,7 @@ class DockerAPI(object):
                 externalCmdLive(self.cmd_run)
         else:
             # stuff to open directly in a terminal
-            externalCmdLive(glob.launchCommands[image][0])
+            externalCmdLive(self.cmd_create)
 
     # container already created but closed. User wants to re-open it
     def openInstance(self, container_id):
