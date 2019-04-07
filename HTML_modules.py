@@ -57,7 +57,7 @@ def sidebar_layout(username, role, current):
         </div>
         <div class="w3-col s8 w3-bar">
           <span>Welcome, <strong>''' + username + '''</strong></span><br>
-          <a href="/index" class="w3-bar-item w3-button"><i class="fa fa-cog"></i></a>
+          <a href="/index"><img src="/static/sign_out.png" alt="sign_out" style="width:25px;height:25px;border:0;"></a>
         </div>
       </div>
       <hr>
@@ -74,84 +74,94 @@ def sidebar_layout(username, role, current):
     <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
     '''
 
-def dockerImages_layout(username, role, image=None):
-
+def dockerImages_layout(username, role):
     html_code = '''<!-- !PAGE CONTENT! -->
       <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-    
+
         <!-- Header -->
         <header class="w3-container" style="padding-top:22px">
-          <h5><b><i class="fa fa-dashboard"></i> Docker images library</b></h5>
+          <h4><b><i class="fa fa-dashboard"></i> Docker images library</b></h4>
         </header> '''
 
     images = dockerAPI.listImages()  # Dataframe with details on local docker images
     if len(images) > 0:
 
-        html_code += ''' <div class="w3-container">
-          <form action="/actionsImage">
-          <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-          <tr>
-            <th>Name</th>
-            <th>Tag</th>
-            <th>ID</th>
-            <th>Created</th>
-            <th>Size</th>        
-          </tr><tr>'''
+        html_code += ''' <br><div class="w3-container"><form action="/actionsImage">
+                         Here is the list of the ''' + str(len(images)) + ''' docker local image(s) you can instantiate: <br>'''
 
         for i in range(len(images)):
-            html_code += "<tr><td>" + str(images.loc[i][0]) + "</td>"
-            html_code += "    <td>" + str(images.loc[i][1]) + "</td>"
-            html_code += "    <td>" + str(images.loc[i][2]) + "</td>"
-            html_code += "    <td>" + str(images.loc[i][3]) + "</td>"
-            html_code += "    <td>" + str(images.loc[i][4]) + "</td>"
-            html_code += '''  <td> <input type="submit" name = "details_''' + str(images.loc[i][0]) + '''" value="Details">  '''
-            html_code += '''       <input type="submit" name = "run_'''     + str(images.loc[i][0]) + '''" value="Run">  '''
-            if role == glob.roles[1]:  # admin
-                html_code += '''       <input type="submit" name = "delete_'''  + str(images.loc[i][0]) + '''" value="Delete">  '''
-            html_code += "</td></tr>"
-
-        html_code += "</table></form><br>"
-
-        if role == glob.roles[1]:  # admin
             html_code += '''
-             <form action ="/actionsImage" method = GET>
-               Pull an image from Docker Hub:
-               <table>
-                <tr><td><input name = "pull_na"></td>
-                <td><input type=submit class="button" value="Pull!"></td></tr>
-               </table >
-               </form>
-               '''
+            <br><td><strong>''' + str(images.loc[i][0]) + '''</strong></td>
+            <table class="w3-table w3-striped w3-bordered w3-border w3-white">
+            <tr><td> <img src="/static/''' + str(images.loc[i][0].replace("/","_")) + '''.jpg" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
+                <td> Tag: ''' + str(images.loc[i][1]) + '''<br>
+                     Size: ''' + str(images.loc[i][3]) + '''<br>
+                     Created: ''' + str(images.loc[i][4]) + ''' </td>
+                <td> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
+                        <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
+                     </a>
+                     <a href="/actionsImage?run_''' + str(images.loc[i][0]) + '''">
+                        <img src="/static/run.jpg" title="Run" alt="run" style="width:42px;height:42px;border:0;">
+                     </a>'''
+                
+            if role == glob.roles[1]:  # admin
+                html_code += '''<a href="/actionsImage?delete_''' + str(images.loc[i][0]) + '''">
+                                   <img src="/static/delete.jpg" title="Delete" alt="details" style="width:42px;height:42px;border:0;">
+                                 </a>  '''
 
-        # if a specific image was selected to display its details, then let's get those
-        if image != None:
-            html_code += ''' 
-              Details for image <strong>''' + image + ''' </strong>:
-              <div class="w3-container">
-                <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-                <tr><th>Item</th><th>Value</th></tr><tr> '''
+            html_code += "</td></tr>"
+            html_code += "</table>"
 
-            details = dockerAPI.imageDetails(image)  # get a dataframe
-            for i in range(len(details.columns)):
-                _items = ""
-                if isinstance(details.loc[0][i], dict):
-                    for item in details.loc[0][i] :
-                        _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
-                else:
-                    _items = str(details.loc[0][i])
-
-                html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
-                html_code += "    <td>" + _items + "</td></tr>"
+        html_code += "</form>"
 
     else:
         html_code += "There are no docker images available at this point."
+
+    if role == glob.roles[1]:  # admin
+        html_code += ''' <br><br>
+          <form action ="/actionsImage" method = GET>
+           Pull an image from Docker Hub:
+           <table>
+            <tr><td><input name = "pull_na"></td>
+            <td><input type=submit class="button" value="Pull!"></td></tr>
+           </table >
+           </form>
+           '''
+
+    return html_code
+
+
+def dockerImagesDetails_layout(image):
+    html_code = '''<!-- !PAGE CONTENT! -->
+      <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+
+        <!-- Header -->
+        <header class="w3-container" style="padding-top:22px">
+          <h4><b><i class="fa fa-dashboard"></i> Details for image "''' + image  + '''"</b></h4>
+        </header>
+        <div class="w3-container">
+           <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+            <tr><th>Item</th><th>Value</th></tr><tr> '''
+
+    details = dockerAPI.imageDetails(image)  # get a dataframe
+    for i in range(len(details.columns)):
+        _items = ""
+        if isinstance(details.loc[0][i], dict):
+            for item in details.loc[0][i]:
+                _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
+        else:
+            _items = str(details.loc[0][i])
+
+        html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
+        html_code += "    <td>" + _items + "</td></tr>"
 
     return html_code
 
 
 def dockerInstances_layout(username, role, container_id=None):
-    # fnd all the active docker instances, get a dataframe with high level details
-    instances = dockerAPI.listInstances()
+
+    # find all the active docker instances for that user, get a dataframe with high level details
+    instances = dockerAPI.listInstances(role= role, username=username)
 
     # build HTML code
     html_code = '''
@@ -159,67 +169,103 @@ def dockerInstances_layout(username, role, container_id=None):
       <div class="w3-main" style="margin-left:300px;margin-top:43px;">
       <!-- Header -->
       <header class="w3-container" style="padding-top:22px">
-       <h5><b><i class="fa fa-dashboard"></i> Active Docker instances</b></h5>
+       <h4><b><i class="fa fa-dashboard"></i> Your active Docker containers</b></h4>
       </header>
       '''
 
     if len(instances) > 0:
-        html_code += '''
-      <div class="w3-container">
-      <form action="/actionsInstance">
-        <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-        <tr><th>CONTAINER ID</th>
-            <th>IMAGE</th>
-            <th>CREATED</th>
-            <th>STATUS</th>
-            <th>PORTS</th>        
-            <th>NAMES</th>
-            <th>ACTIONS</th>
-        </tr>'''
+        html_code += '''<div class="w3-container">'''
+
         for i in range(len(instances)):
-            html_code += "<tr><td>" + str(instances.loc[i][0]) + "</td>"
-            html_code += "    <td>" + str(instances.loc[i][1]) + "</td>"
-            html_code += "    <td>" + str(instances.loc[i][3]) + "</td>"
-            html_code += "    <td>" + str(instances.loc[i][4]) + "</td>"
-            html_code += "    <td>" + str(instances.loc[i][5]) + "</td>"
-            html_code += "    <td>" + str(instances.loc[i][6]) + "</td>"
-            html_code += '''  <td> <input type="submit" name = "open_''' + str(instances.loc[i][0]) + '''" value="Open">  '''
-            html_code += '''       <input type="submit" name = "stop_'''    + str(instances.loc[i][0]) + '''" value="Stop">  '''
-            html_code += '''       <input type="submit" name = "pause_'''   + str(instances.loc[i][0]) + '''" value="Pause">  '''
-            html_code += '''       <input type="submit" name = "unpause_''' + str(instances.loc[i][0]) + '''" value="Unpause">  '''
-            html_code += '''       <input type="submit" name = "restart_''' + str(instances.loc[i][0]) + '''" value="Restart">  '''
-            html_code += '''       <input type="submit" name = "details_''' + str(instances.loc[i][0]) + '''" value="Details">  '''
-            html_code += "</td></tr>"
-
-        html_code += "</table></form><br>"
-
-        if container_id != None:
-
-            html_code += ''' 
-              Details for instance <strong>''' + container_id  + ''' </strong>:
-              <div class="w3-container">
-               <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-              <tr>
-             <th>Item</th>
-             <th>Value</th>                
-             </tr><tr> '''
-
-            details = dockerAPI.instanceDetails(container_id)  # get a dataframe
-            for i in range(len(details.columns)):
-                _items = ""
-                if isinstance(details.loc[0][i], dict):
-                    for item in details.loc[0][i] :
-                        _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
-                else:
-                    _items = str(details.loc[0][i])
-
-                html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
-                html_code += "    <td>" + _items + "</td></tr>"
+            html_code += '''<table class ="w3-table w3-striped w3-bordered w3-border w3-white" >
+            
+            <br><td><strong>''' + str(instances.loc[i][1]) + '''</strong></td>
+            <table class="w3-table w3-striped w3-bordered w3-border w3-white">
+            <tr><td> <img src="/static/''' + str(instances.loc[i][5].replace("/","_")) + '''.jpg" alt="''' + str(instances.loc[i][5]) + '''" style="width:100px;border:0;"> </td>
+                <td> ID: ''' + str(instances.loc[i][0][11:]) + '''<br>
+                     Image: ''' + str(instances.loc[i][5]) + '''<br> 
+                     Created: ''' + str(instances.loc[i][4]) + '''<br>
+                     Status: ''' + str(instances.loc[i][3]) + '''<br>
+                     Port: ''' + str(instances.loc[i][2]) + '''<br></td>
+                
+                <td> <a href="/actionsInstance?open=''' + str(instances.loc[i][0]) + '''">
+                        <img src="/static/open.png" title = "Open" alt="open" style="width:42px;height:42px;border:0;">
+                     </a>
+                     <a href="/actionsInstance?stop=''' + str(instances.loc[i][0]) + '''">
+                        <img src="/static/stop.jpg" title = "Stop" alt="stop" style="width:42px;height:42px;border:0;">
+                     </a>
+                     <a href="/actionsInstance?pause=''' + str(instances.loc[i][0]) + '''">
+                        <img src="/static/pause.png" title = "Pause" alt="pause" style="width:42px;height:42px;border:0;">
+                     </a>
+                     <a href="/actionsInstance?unpause=''' + str(instances.loc[i][0]) + '''">
+                        <img src="/static/unpause.jpg" title = "Unpause" alt="unpause" style="width:42px;height:42px;border:0;">
+                     </a>
+                     <a href="/actionsInstance?restart=''' + str(instances.loc[i][0]) + '''">
+                        <img src="/static/restart.jpg" title = "Restart" alt="restart" style="width:42px;height:42px;border:0;">
+                     </a>                     
+                     <a href="/instanceDetails?container_id=''' + str(instances.loc[i][0]) + '''">
+                        <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
+                     </a>   
+                </td></tr>                
+            </table></form><br> '''
 
     else:
         html_code += "There are no docker instances available at this point."
 
     return html_code
+
+
+def instanceDetails_layout(container_id):
+    html_code += ''' 
+      Details for instance <strong>''' + container_id + ''' </strong>:
+      <div class="w3-container">
+       <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+      <tr>
+     <th>Item</th>
+     <th>Value</th>                
+     </tr><tr> '''
+
+    details = dockerAPI.instanceDetails(container_id)  # get a dataframe
+    for i in range(len(details.columns)):
+        _items = ""
+        if isinstance(details.loc[0][i], dict):
+            for item in details.loc[0][i]:
+                _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
+        else:
+            _items = str(details.loc[0][i])
+
+        html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
+        html_code += "    <td>" + _items + "</td></tr>"
+
+    return html_code
+
+
+def dockerInstanceDetails_layout(container_id):
+    html_code = '''<!-- !PAGE CONTENT! -->
+          <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+
+            <!-- Header -->
+            <header class="w3-container" style="padding-top:22px">
+              <h4><b><i class="fa fa-dashboard"></i> Details for active container "''' + container_id + '''"</b></h4>
+            </header>
+            <div class="w3-container">
+               <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+                <tr><th>Item</th><th>Value</th></tr><tr> '''
+
+    details = dockerAPI.instanceDetails(container_id)  # get a dataframe
+    for i in range(len(details.columns)):
+        _items = ""
+        if isinstance(details.loc[0][i], dict):
+            for item in details.loc[0][i]:
+                _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
+        else:
+            _items = str(details.loc[0][i])
+
+        html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
+        html_code += "    <td>" + _items + "</td></tr>"
+
+    return html_code
+
 
 
 def dockerVolumes_layout(username, role, volume_id=None):

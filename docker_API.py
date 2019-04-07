@@ -23,25 +23,10 @@ class DockerAPI(object):
         else:
             return 0
 
-    def longestContainerName(self):
-        client = docker.from_env()
-
-        if len(client.containers.list()) > 0:
-            self.containers = []
-            for self.container in client.containers.list():
-                self.start = str(self.container).find(" ")
-                self.end = str(self.container).find(">", self.start + 1)
-                self.id = str(self.container)[self.start + 1:self.end]
-                self.containers.append(client.containers.get(self.id).attrs['Config']['Image'])
-            return max([len(item) for item in self.containers])
-        else:
-            return 0
-
-
     def listImages(self):
         # Create a Dataframe listing all the docker images
         self.stdout = externalCmd("docker images")
-        return pd.read_fwf(StringIO(self.stdout), widths=[self.longestImageName(), 20, 20, 20, 20])
+        return pd.read_fwf(StringIO(self.stdout), widths=[max(20, self.longestImageName()), 20, 20, 20, 20])
 
 
     def imageDetails(self, image):
@@ -60,10 +45,49 @@ class DockerAPI(object):
         self.stdout = externalCmd("docker volume inspect " + volume_id)
         return pd.read_json(self.stdout)
 
-    def listInstances(self):
-        # Create a Dataframe listing all the docker instances
-        self.stdout = externalCmd("docker ps")
-        return pd.read_fwf(StringIO(self.stdout), widths=[20, self.longestContainerName(), 20, 20, 20, 20, 20])
+    # Create a Dataframe listing all the docker instances
+    def listInstances(self, role, username):
+
+        self.ids = []; self.names = []; self.ports = []; self.status = []; self.created = []; self.images = []
+
+        for self.instance in docker.from_env().containers.list():
+            self.instance = str(self.instance)
+            self.instance = self.instance.replace("<Container:", "")
+            self.instance = self.instance.replace(">", "")
+
+            self.details = dockerAPI.instanceDetails(self.instance).to_dict()
+
+            print("Username: " + str(username))
+            print("name: " + str(self.details["Name"][0][1:]))
+
+            # Admins: shows all containers. Users: only show theirs
+            if role == glob.roles[1] or username in self.details["Name"][0][1:]:
+
+                # container id
+                self.ids.append(self.details["Id"][0])
+
+                # names
+                self.names.append(self.details["Name"][0][1:])
+
+                # ports
+                try:
+                    self.ports.append(self.details["HostConfig"][0]["PortBindings"]["8787/tcp"][0]["HostPort"])
+                except:
+                    self.ports.append("N/A")
+
+                # status
+                self.status.append(self.details["State"][0]["Status"])
+
+                # created
+                self.created.append(self.details["Created"][0])
+
+                # image
+                self.images.append((self.details["Config"][0]["Image"]))
+
+        self.data = list(zip(self.ids, self.names, self.ports, self.status, self.created, self.images))
+
+        return pd.DataFrame(self.data, columns=['ID', 'Names', 'Ports', 'Status', 'Created', 'Images'])
+
 
     def listVolumes(self):
         # Create a Dataframe listing all the docker volumes
@@ -119,13 +143,16 @@ class DockerAPI(object):
             pass
 
     # User requested to instantiate an image
-    def instantiatelImage(self, image, userpassword):
+    def instantiatelImage(self, image, username, userpassword):
 
         # Create the instance.
         if len(glob.launchCommands[image]) > 1:
 
             self.cmd_create = glob.launchCommands[image][0]
             self.cmd_run = glob.launchCommands[image][1]
+
+            if "<userid>" in self.cmd_create:
+                self.cmd_create = self.cmd_create.replace("<userid>", username)
 
             if "<password>" in self.cmd_create:
                 self.cmd_create = self.cmd_create.replace("<password>", userpassword)

@@ -1,6 +1,5 @@
 import cherrypy
 import pandas as pd
-#import sqlite3
 import os
 import subprocess
 import socket
@@ -47,10 +46,11 @@ class Glob(object):
 
         # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
         self.launchCommands = {}
-        self.launchCommands["rocker/verse"] = ["docker run --rm -dp <port>:8787 -e PASSWORD=<password> rocker/verse", self.internerBrowser + " http://127.0.0.1:<port>/"]
-        self.launchCommands["jupyter/scipy-notebook"] = ["docker run -dp <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>"]
-        self.launchCommands["r-base"] = ['konsole -e docker run -ti --rm r-base']
-        self.launchCommands["alpine"] = ["konsole -e docker run -ti --rm alpine"]
+        self.launchCommands["rocker/rstudio"] = ["docker run --name <userid>_rstudio --rm -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", self.internerBrowser + " http://127.0.0.1:<port>/"]
+        self.launchCommands["jupyter/scipy-notebook"] = ["docker run --name <userid>_Jupyter -dp <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>"]
+        self.launchCommands["r-base"] = ['konsole -e docker run --name <userid>_r -ti --rm r-base']
+        self.launchCommands["alpine"] = ["konsole -e docker run --name <userid>_alpine -ti --rm alpine"]
+        self.launchCommands["hello-world"] = ["konsole -e docker run --name <userid>_Helloworld -ti --rm hello-world"]
 
         self.ports = []
 
@@ -109,6 +109,18 @@ class Webpages(object):
         return html_code
     dockerlibrary.exposed = True
 
+
+    # Display the details of a specific image
+    def imageDetails(self, image):
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += dockerImagesDetails_layout(image=image)
+        html_code += footer_layout()
+        return html_code
+    imageDetails.exposed = True
+
+
     # Actions on Docker images: remove, instantiate, pull
     def actionsImage(self, **kwargs):
 
@@ -129,7 +141,7 @@ class Webpages(object):
                 html_code += dockerImages_layout(self.username, role=self.role, image=image)
 
         elif actions == "run":
-            dockerAPI.instantiatelImage(image, self.userpassword)
+            dockerAPI.instantiatelImage(image, self.username, self.userpassword)
             html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
             html_code += dockerInstances_layout(self.username, role=self.role)
 
@@ -142,39 +154,46 @@ class Webpages(object):
     ########################################################################
 
     # page listing all the docker containers available
-    def dockerInstances(self, container_id=None):
+    def dockerInstances(self):
         html_code  = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
-        if container_id == None:
-            html_code += dockerInstances_layout(self.username, role=self.role)
-        else:
-            html_code += dockerInstances_layout(self.username, role=self.role, container_id=container_id)
+        html_code += dockerInstances_layout(self.username, role=self.role)
         html_code += footer_layout()
         return html_code
     dockerInstances.exposed = True
 
+    # Display detailed info on a specific active container
+    def instanceDetails(self, container_id):
+        html_code  = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
+        html_code += dockerInstanceDetails_layout(container_id=container_id)
+        html_code += footer_layout()
+        return html_code
+    instanceDetails.exposed = True
 
     # Actions on an active Docker instances: stop, pause, unpause, restart or get lower level details
     def actionsInstance(self, **kwargs):
 
-        actions, container_id = list(kwargs.keys())[0].split("_")
+        action = list(kwargs.keys())[0]
+        container_id = kwargs[action]
 
-        if actions == "open":
+        if action == "open":
             dockerAPI.openInstance(container_id)
-        elif actions == "stop":
+        elif action == "stop":
             dockerAPI.stopInstance(container_id)
-        elif actions == "pause":
+        elif action == "pause":
             dockerAPI.pauseInstance(container_id)
-        elif actions == "unpause":
+        elif action == "unpause":
             dockerAPI.unpauseInstance(container_id)
-        elif actions == "restart":
+        elif action == "restart":
             dockerAPI.restartInstance(container_id)
 
         html_code  = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
-        if actions == "details":
+        if action == "details":
             html_code += dockerInstances_layout(self.username, role=self.role, container_id=container_id)
         else:
             html_code += dockerInstances_layout(self.username, role=self.role)
