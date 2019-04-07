@@ -91,7 +91,7 @@ def dockerImages_layout(username, role):
         for i in range(len(images)):
             html_code += '''
             <br><td><strong>''' + str(images.loc[i][0]) + '''</strong></td>
-            <table class="w3-table w3-striped w3-bordered w3-border w3-white">
+            <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
             <tr><td> <img src="/static/''' + str(images.loc[i][0].replace("/","_")) + '''.jpg" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
                 <td> Tag: ''' + str(images.loc[i][1]) + '''<br>
                      Size: ''' + str(images.loc[i][3]) + '''<br>
@@ -176,12 +176,12 @@ def dockerInstances_layout(username, role, container_id=None):
         html_code += '''<div class="w3-container">'''
 
         for i in range(len(instances)):
-            html_code += '''<table class ="w3-table w3-striped w3-bordered w3-border w3-white" >
+            html_code += '''
             
             <br><td><strong>''' + str(instances.loc[i][1]) + '''</strong></td>
-            <table class="w3-table w3-striped w3-bordered w3-border w3-white">
+            <table style="width:70%" class="w3-table w3-striped w3-bordered w3-border w3-white">
             <tr><td> <img src="/static/''' + str(instances.loc[i][5].replace("/","_")) + '''.jpg" alt="''' + str(instances.loc[i][5]) + '''" style="width:100px;border:0;"> </td>
-                <td> ID: ''' + str(instances.loc[i][0][11:]) + '''<br>
+                <td> ID: ''' + str(instances.loc[i][0][:12]) + '''<br>
                      Image: ''' + str(instances.loc[i][5]) + '''<br> 
                      Created: ''' + str(instances.loc[i][4]) + '''<br>
                      Status: ''' + str(instances.loc[i][3]) + '''<br>

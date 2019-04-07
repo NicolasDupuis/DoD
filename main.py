@@ -31,6 +31,7 @@ class Glob(object):
     def __init__(self):
 
         self.internerBrowser = "firefox"
+        self.terminal = "xterm -e "
 
         self.roles = ["User", "Admin"]
 
@@ -46,13 +47,12 @@ class Glob(object):
 
         # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
         self.launchCommands = {}
-        self.launchCommands["rocker/rstudio"] = ["docker run --name <userid>_rstudio<#n#> --rm -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", self.internerBrowser + " http://127.0.0.1:<port>/", "rstudio"]
-        self.launchCommands["jupyter/scipy-notebook"] = ["docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", self.internerBrowser + " 127.0.0.1:<port>/?token=<token>", "Jupyter"]
-        self.launchCommands["r-base"] = ['konsole -e docker run --name <userid>_r<#n#> -ti --rm r-base', "R"]
-        self.launchCommands["alpine"] = ["konsole -e docker run --name <userid>_alpine<#n#> -ti --rm alpine", "Alpine"]
-        self.launchCommands["hello-world"] = ["konsole -e docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", "HelloWorld"]
+        self.launchCommands["rocker/rstudio"] =         {"create": "docker run --name <userid>_rstudio<#n#> --rm -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", "run": self.internerBrowser + " http://127.0.0.1:<port>/", "name": "rstudio"}
+        self.launchCommands["jupyter/scipy-notebook"] = {"create": "docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", "run": self.internerBrowser + " 127.0.0.1:<port>/?token=<token>", "name": "Jupyter"}
+        self.launchCommands["r-base"] =                 {"create": self.terminal + 'docker run --name <userid>_r<#n#> -ti --rm r-base', "name": "R"}
+        self.launchCommands["alpine"] =                 {"create": self.terminal + "docker run --name <userid>_alpine<#n#> -ti --rm alpine", "name":"Alpine"}
+        self.launchCommands["hello-world"] =            {"create": self.terminal + "docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", "name": "HelloWorld"}
 
-        self.ports = []
 
 class Webpages(object):
     # HTTP request objects
@@ -280,9 +280,7 @@ if __name__ == '__main__':
         },
         '/static': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': '/home/nicolas/PycharmProjects/DoD/static'
+            'tools.staticdir.dir': './static'
         }
     }
     cherrypy.quickstart(Webpages(), '/', conf)
-
-

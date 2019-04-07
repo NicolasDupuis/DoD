@@ -94,11 +94,7 @@ class DockerAPI(object):
     def pullImage(self, image):
 
         try:
-            self.stdout = externalCmd("docker pull " + image)
-            if "Image is up to date" in self.stdout:
-                print("Image was up to date...")
-            else:
-                print("New image added")
+            externalCmd(glob.terminal + "docker pull " + image)
         except:
             pass
 
@@ -142,15 +138,16 @@ class DockerAPI(object):
     # User requested to instantiate an image
     def instantiatelImage(self, image, role, username, userpassword):
 
-        self.cmd_create = glob.launchCommands[image][0]
+        self.cmd_create = glob.launchCommands[image]["create"]
 
+        # placeholder for username
         if "<userid>" in self.cmd_create:
             self.cmd_create = self.cmd_create.replace("<userid>", username)
 
-        # pattern for container naming
+        # placeholder for container's name
         if "<#n#>" in self.cmd_create:
             self.instances = dockerAPI.listInstances(role=role, username=username)
-            self.instances = sorted([instance for instance in list(self.instances["Names"]) if glob.launchCommands[image][2] in instance])
+            self.instances = sorted([instance for instance in list(self.instances["Names"]) if glob.launchCommands[image]["name"] in instance])
 
             if len(self.instances) == 0:  # no container for this image yet
                 self.container_n = "-1"
@@ -159,25 +156,25 @@ class DockerAPI(object):
 
             self.cmd_create = self.cmd_create.replace("<#n#>", self.container_n)
 
+        # placeholder for user password
+        if "<password>" in self.cmd_create:
+            self.cmd_create = self.cmd_create.replace("<password>", userpassword)
 
-        # Create the instance.
-        if len(glob.launchCommands[image]) > 1:
+        # placeholder for port
+        if "<port>" in self.cmd_create:
+            self.port = getNewPort()
+            externalCmdLive(self.cmd_create.replace("<port>", str(self.port)))
 
-            self.cmd_run = glob.launchCommands[image][1]
+        # let's create this thing
+        externalCmdLive(self.cmd_create)
 
-            if "<password>" in self.cmd_create:
-                self.cmd_create = self.cmd_create.replace("<password>", userpassword)
+        # do we need to run it?
+        try:
+            self.cmd_run = glob.launchCommands[image]["run"]
+            externalCmdLive(self.cmd_run.replace("<port>", str(self.port)))
+        except:
+            pass
 
-            if "<port>" in self.cmd_create:
-                self.port = getNewPort()
-                externalCmdLive(self.cmd_create.replace("<port>", str(self.port)))
-                externalCmdLive(self.cmd_run.replace("<port>", str(self.port)))
-            else:
-                externalCmdLive(self.cmd_create)
-                externalCmdLive(self.cmd_run)
-        else:
-            # stuff to open directly in a terminal
-            externalCmdLive(self.cmd_create)
 
     # container already created but closed. User wants to re-open it
     def openInstance(self, container_id):
