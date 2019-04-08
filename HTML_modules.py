@@ -38,12 +38,12 @@ def sidebar_layout(username, role, current):
         color[3] = "w3-blue"
 
     if role == glob.roles[0]:  # users
-        sections = '<a href="dockerlibrary"   class="w3-bar-item w3-button w3-padding ' + color[0] + '"><i class="fa fa-eye fa-fw">   </i>  Images library</a>'
-        sections += '<a href="dockerInstances"         class="w3-bar-item w3-button w3-padding ' + color[1] + '"><i class="fa fa-users fa-fw"> </i>  Active containers</a>'
+        sections = '<a href="dockerlibrary"   class="w3-bar-item w3-button w3-padding ' + color[0] + '"><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img>  Images library</a>'
+        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><img src = "./static/docker-icon.png" style="width:32px;border:0;"> </img>  Active containers</a>'
 
     elif role == glob.roles[1]:  # admin
-        sections = '<a href="dockerlibrary" class="w3-bar-item w3-button w3-padding ' + color[0] + '"><i class="fa fa-eye fa-fw">   </i>  Images library</a>'
-        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><i class="fa fa-users fa-fw"> </i>  Active containers</a>'
+        sections = '<a href="dockerlibrary"   class="w3-bar-item w3-button w3-padding ' + color[0] + '"><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img>  Images library</a>'
+        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><img src = "./static/docker-icon.png"> </img>  Active containers</a>'
         sections += '<a href="volumeslibrary" class="w3-bar-item w3-button w3-padding ' + color[2] + '"><i class="fa fa-users fa-fw"> </i>  Volumes library</a>'
         sections += '<a href="usersMgmt" class="w3-bar-item w3-button w3-padding    ' + color[3] + '"><i class="fa fa-eye fa-fw"></i>  Users management</a>'
 
@@ -85,8 +85,7 @@ def dockerImages_layout(username, role):
     images = dockerAPI.listImages()  # Dataframe with details on local docker images
     if len(images) > 0:
 
-        html_code += ''' <br><div class="w3-container"><form action="/actionsImage">
-                         Here is the list of the ''' + str(len(images)) + ''' docker local image(s) you can instantiate: <br>'''
+        html_code += ''' <br>Here is the list of the ''' + str(len(images)) + ''' docker local image(s) you can instantiate: <br>'''
 
         for i in range(len(images)):
             html_code += '''
@@ -99,7 +98,7 @@ def dockerImages_layout(username, role):
                 <td> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/actionsImage?run_''' + str(images.loc[i][0]) + '''">
+                     <a href="/createImage?image=''' + str(images.loc[i][0]) + '''">
                         <img src="/static/run.jpg" title="Run" alt="run" style="width:42px;height:42px;border:0;">
                      </a>'''
                 
@@ -110,8 +109,6 @@ def dockerImages_layout(username, role):
 
             html_code += "</td></tr>"
             html_code += "</table>"
-
-        html_code += "</form>"
 
     else:
         html_code += "There are no docker images available at this point."
@@ -129,6 +126,27 @@ def dockerImages_layout(username, role):
 
     return html_code
 
+
+def createImage_layout(image):
+    html_code = '''<!-- !PAGE CONTENT! -->
+          <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+
+            <!-- Header -->
+            <header class="w3-container" style="padding-top:22px">
+              <h4><b><i class="fa fa-dashboard"></i> Docker image launchpad</b></h4>
+            </header> 
+            <br> We're about to run <strong>''' + image + ''' </strong> for you. Just tell us if you need to mount one of these volumes in it:<br>'''
+
+    # list available volumes for mounting
+    volumes = dockerAPI.listVolumes()
+    listvolumes = "<option value = image=" + image + "&volume=none> None </option>"
+    listvolumes = "<option value = image=" + image + "&volume=default> Default </option>"
+    for i in range(len(volumes)):
+        listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + ">" + volumes.loc[i][1] + "</option >"
+    html_code += '''<br><form action ="/actionsImage" method = GET><select name = "run" size = "4" single> ''' + listvolumes + '''</select>'''
+    html_code += '''<br> <input type=submit class="button" value="Launch !"></form>'''
+
+    return html_code
 
 def dockerImagesDetails_layout(image):
     html_code = '''<!-- !PAGE CONTENT! -->

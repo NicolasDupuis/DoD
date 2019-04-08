@@ -47,11 +47,18 @@ class Glob(object):
 
         # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
         self.launchCommands = {}
-        self.launchCommands["rocker/rstudio"] =         {"create": "docker run --name <userid>_rstudio<#n#> --rm -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", "run": self.internerBrowser + " http://127.0.0.1:<port>/", "name": "rstudio"}
-        self.launchCommands["jupyter/scipy-notebook"] = {"create": "docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", "run": self.internerBrowser + " 127.0.0.1:<port>/?token=<token>", "name": "Jupyter"}
-        self.launchCommands["r-base"] =                 {"create": self.terminal + 'docker run --name <userid>_r<#n#> -ti --rm r-base', "name": "R"}
-        self.launchCommands["alpine"] =                 {"create": self.terminal + "docker run --name <userid>_alpine<#n#> -ti --rm alpine", "name":"Alpine"}
-        self.launchCommands["hello-world"] =            {"create": self.terminal + "docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", "name": "HelloWorld"}
+        self.launchCommands["rocker/rstudio"] =         {"create": "docker run --name <userid>_rstudio<#n#> --rm <volume> -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", \
+                                                         "run": self.internerBrowser + " http://127.0.0.1:<port>/", \
+                                                         "name": "rstudio"}
+        self.launchCommands["jupyter/scipy-notebook"] = {"create": "docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", \
+                                                         "run": self.internerBrowser + " 127.0.0.1:<port>/?token=<token>",\
+                                                         "name": "Jupyter"}
+        self.launchCommands["r-base"] =                 {"create": self.terminal + 'docker run --name <userid>_r<#n#> -ti --rm r-base', \
+                                                         "name": "R"}
+        self.launchCommands["alpine"] =                 {"create": self.terminal + "docker run --name <userid>_alpine<#n#> -ti --rm alpine", \
+                                                         "name": "Alpine"}
+        self.launchCommands["hello-world"] =            {"create": self.terminal + "docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", \
+                                                         "name": "HelloWorld"}
 
 
 class Webpages(object):
@@ -62,12 +69,11 @@ class Webpages(object):
         html_code = header_layout()
         html_code += topContainer_Layout()
 
-        html_code += '''<br><br><br><br>  
-        
+        html_code += '''<br><br><br><br>          
         
         <center><img src="/static/d-wise-logo.jpg" alt="Logo" style="width:400px;border:0;"><br>
          <form action ="/login" method = GET>
-          <h3> Welcome to <strong>d-wise on demand </strong></h3>
+          <h3> <strong><i>'on demand'</strong></i></h3>
           <h5> - a prototype by Nicolas and Andy -</h3><br>
           
         <table style="width:30%">
@@ -138,28 +144,43 @@ class Webpages(object):
         return html_code
     imageDetails.exposed = True
 
+    # Display the details of a specific image
+    def createImage(self, image):
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += createImage_layout(image=image)
+        html_code += footer_layout()
+        return html_code
+    createImage.exposed = True
 
     # Actions on Docker images: remove, instantiate, pull
     def actionsImage(self, **kwargs):
 
-        html_code  = header_layout()
+        html_code = header_layout()
         html_code += topContainer_Layout()
-        actions, image = list(kwargs.keys())[0].split("_")
 
-        if actions in ["pull", "delete", "details"]:
+        if list(kwargs.keys())[0] == "run":
+            action = "run"
+            image = kwargs['run'].split("&")[0].split("=")[1]
+            volume = kwargs['run'].split("&")[1].split("=")[1]
+        else:
+            action, image = list(kwargs.keys())[0].split("_")
+
+        if action in ["pull", "delete", "details"]:
             html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
 
-            if actions == "pull":
+            if action == "pull":
                 dockerAPI.pullImage(kwargs["pull_na"])
                 html_code += dockerImages_layout(self.username, role=self.role)
-            elif actions == "delete":
+            elif action == "delete":
                 dockerAPI.removeImage(image)
                 html_code += dockerImages_layout(self.username, role=self.role)
-            elif actions == "details":
+            elif action == "details":
                 html_code += dockerImages_layout(self.username, role=self.role, image=image)
 
-        elif actions == "run":
-            dockerAPI.instantiatelImage(image, role=self.role, username = self.username, userpassword=self.userpassword)
+        elif action == "run":
+            dockerAPI.instantiatelImage(image, role=self.role, username = self.username, userpassword=self.userpassword, volume=volume)
             html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
             html_code += dockerInstances_layout(self.username, role=self.role)
 
@@ -281,6 +302,14 @@ if __name__ == '__main__':
         '/static': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': './static'
-        }
+        },
+        '/favicon.ico':
+            {
+                'tools.staticfile.on': True,
+                'tools.staticfile.filename:': './static/favico.jpeg'
+            }
+
     }
     cherrypy.quickstart(Webpages(), '/', conf)
+
+

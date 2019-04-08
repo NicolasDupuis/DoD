@@ -136,7 +136,7 @@ class DockerAPI(object):
             pass
 
     # User requested to instantiate an image
-    def instantiatelImage(self, image, role, username, userpassword):
+    def instantiatelImage(self, image, role, username, userpassword, volume):
 
         self.cmd_create = glob.launchCommands[image]["create"]
 
@@ -160,15 +160,24 @@ class DockerAPI(object):
         if "<password>" in self.cmd_create:
             self.cmd_create = self.cmd_create.replace("<password>", userpassword)
 
+        if "<volume>" in self.cmd_create:
+            if volume in ["none","default"]:
+                self.cmd_create = self.cmd_create.replace("<volume>", "")
+            else:
+                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":/home/rstudio/" + volume)
+
         # placeholder for port
         if "<port>" in self.cmd_create:
             self.port = getNewPort()
-            externalCmdLive(self.cmd_create.replace("<port>", str(self.port)))
+            print("Hello")
+            self.cmd_create = self.cmd_create.replace("<port>", str(self.port))
+
+        print("Create command: " + str(self.cmd_create))
 
         # let's create this thing
         externalCmdLive(self.cmd_create)
 
-        # do we need to run it?
+        # do we need to run it in a browser?
         try:
             self.cmd_run = glob.launchCommands[image]["run"]
             externalCmdLive(self.cmd_run.replace("<port>", str(self.port)))
