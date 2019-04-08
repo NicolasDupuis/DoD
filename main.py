@@ -45,23 +45,37 @@ class Glob(object):
         self.userpassword["Andy"] = "_andy"
         self.userpassword["Jordan"] = "_jordan"
 
-        # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
-        self.launchCommands = {}
-        self.launchCommands["rocker/rstudio"] =         {"create": "docker run --name <userid>_rstudio<#n#> --rm <volume>-dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", \
-                                                         "run": self.internerBrowser + " http://127.0.0.1:<port>/", \
-                                                         "name": "Rstudio",\
-                                                         "mountPoint": "/home/rstudio/"}
-        self.launchCommands["jupyter/scipy-notebook"] = {"create": "docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", \
-                                                         "run": self.internerBrowser + " 127.0.0.1:<port>/?token=<token>",\
-                                                         "name": "Jupyter"}
-        self.launchCommands["r-base"] =                 {"create": self.terminal + 'docker run --name <userid>_r<#n#> -ti --rm r-base', \
-                                                         "name": "R",\
-                                                         "mountPoint": "/media/"}
-        self.launchCommands["alpine"] =                 {"create": self.terminal + "docker run --name <userid>_alpine<#n#> -ti --rm alpine", \
-                                                         "name": "Alpine",\
-                                                         "mountPoint": "/media/"}
-        self.launchCommands["hello-world"] =            {"create": self.terminal + "docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", \
-                                                         "name": "HelloWorld"}
+        # Images details, to be controlled by the admin. Will end up in a database.
+        self.images = {}
+
+        self.images["rocker/rstudio"] = {"password": True,
+                                         "exposedPort": 8787,
+                                         "webapp": True,
+                                         "nickname": "Rstudio",
+                                         "mountPoint": "/home/rstudio/"}
+
+        self.images["jupyter/scipy-notebook"] = {"exposedPort": 8888,
+                                                 "webapp": True,
+                                                 "password": False,
+                                                 "addURL": "?token=<token>",
+                                                 "nickname": "Jupyter"}
+
+        self.images["r-base"] = {"nickname": "R",
+                                 "exposedPort": None,
+                                 "webapp": False,
+                                 "password": False,
+                                 "mountPoint": "/media/"}
+
+        self.images["alpine"] = {"nickname": "Alpine",
+                                 "exposedPort": None,
+                                 "webapp": False,
+                                 "password": False,
+                                 "mountPoint": "/media/"}
+
+        self.images["hello-world"] = {"nickname": "Hello World!",
+                                      "exposedPort": None,
+                                      "webapp": False,
+                                      "password": False}
 
 
 class Webpages(object):
@@ -148,51 +162,61 @@ class Webpages(object):
     imageDetails.exposed = True
 
     # Display the details of a specific image
-    def createImage(self, image):
+    def imageLaunchPad(self, image):
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
-        html_code += createImage_layout(image=image)
+        html_code += imageLaunchPad_layout(image=image)
         html_code += footer_layout()
         return html_code
-    createImage.exposed = True
+    imageLaunchPad.exposed = True
 
-    # Actions on Docker images: remove, instantiate, pull
-    def actionsImage(self, mountPoint=None, **kwargs):
-
+    # Display the details of a specific image
+    def deleteImage(self, image):
+        dockerAPI.removeImage(image)
         html_code = header_layout()
         html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += dockerImages_layout(self.username, role=self.role)
+        html_code += footer_layout()
+        return html_code
+    deleteImage.exposed = True
 
-        if list(kwargs.keys())[0] == "run":
-            action = "run"
-            image = kwargs['run'].split("&")[0].split("=")[1]
-            volume = kwargs['run'].split("&")[1].split("=")[1]
-        else:
-            action, image = list(kwargs.keys())[0].split("_")
+    # Display the details of a specific image
+    def pullImage(self, image):
+        dockerAPI.pullImage(image)
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += dockerImages_layout(self.username, role=self.role)
+        html_code += footer_layout()
+        return html_code
+    pullImage.exposed = True
 
-        mountPoint += volume
+    # Actions on Docker images: remove, instantiate, pull
+    def actionsImage(self, **kwargs):
 
-        if action in ["pull", "delete", "details"]:
-            html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        # unpack parameters
+        image = kwargs['run'].split("&")[0].split("=")[1]
+        volume = kwargs['run'].split("&")[1].split("=")[1]
+        mountPoint = kwargs['mountPoint'] + volume
+        cpu = kwargs['cpu']
+        ram = kwargs['ram']
 
-            if action == "pull":
-                dockerAPI.pullImage(kwargs["pull_na"])
-                html_code += dockerImages_layout(self.username, role=self.role)
-            elif action == "delete":
-                dockerAPI.removeImage(image)
-                html_code += dockerImages_layout(self.username, role=self.role)
-            elif action == "details":
-                html_code += dockerImages_layout(self.username, role=self.role, image=image)
-
-        elif action == "run":
-            dockerAPI.instantiatelImage(image, role=self.role,\
-                                        username=self.username,\
-                                        userpassword=self.userpassword, \
-                                        volume=volume,\
-                                        mountPoint=mountPoint)
-            html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
-            html_code += dockerInstances_layout(self.username, role=self.role)
-
+        # create the image
+        dockerAPI.instantiatelImage(image,
+                                    role=self.role,
+                                    username=self.username,
+                                    userpassword=self.userpassword,
+                                    volume=volume,
+                                    mountPoint=mountPoint,
+                                    cpu=cpu,
+                                    ram=ram)
+        # display !
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
+        html_code += dockerInstances_layout(self.username, role=self.role)
         html_code += footer_layout()
         return html_code
     actionsImage.exposed = True

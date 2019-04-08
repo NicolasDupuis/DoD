@@ -138,53 +138,72 @@ class DockerAPI(object):
         except:
             pass
 
-    # User requested to instantiate an image
-    def instantiatelImage(self, image, role, username, userpassword, volume, mountPoint):
 
-        self.cmd_create = glob.launchCommands[image]["create"]
+    # Instantiate an image
+    def instantiatelImage(self, image, role, username, userpassword, volume, mountPoint, cpu, ram):
 
-        # placeholder for username
-        if "<userid>" in self.cmd_create:
-            self.cmd_create = self.cmd_create.replace("<userid>", username)
+        if glob.images[image]["webapp"] == True:
+            self.cmd_create = "docker run --name <userid>_<nickname><#n#> --rm <volume>-dp <port> <password> <CPU><RAM><image>"
+        else:
+            self.cmd_create = "docker run --name <userid>_<nickname><#n#> <volume>-ti --rm <image>"
 
-        # placeholder for container's name
-        if "<#n#>" in self.cmd_create:
-            self.instances = dockerAPI.listInstances(role=role, username=username)
-            self.instances = sorted([instance for instance in list(self.instances["Names"]) if glob.launchCommands[image]["name"] in instance])
+        # placeholder for container's future name: 3 parts (user ID, image nickname, increment integer)
+        # 1) user ID
+        self.cmd_create = self.cmd_create.replace("<userid>", username)
 
-            if len(self.instances) == 0:  # no container for this image yet
-                self.container_n = "-1"
-            else:
-                self.container_n = "-" + str(int(self.instances[-1].split("-")[1]) + 1)
+        # 2) image nickname
+        self.cmd_create = self.cmd_create.replace("<nickname>", glob.images[image]["nickname"])
 
-            self.cmd_create = self.cmd_create.replace("<#n#>", self.container_n)
+        # 3) increment
+        self.instances = dockerAPI.listInstances(role=role, username=username)
+        self.instances = sorted([instance for instance in list(self.instances["Names"]) if glob.images[image]["nickname"] in instance])
+        if len(self.instances) == 0:  # no container for this image yet
+            self.container_n = "-1"
+        else:
+            self.container_n = "-" + str(int(self.instances[-1].split("-")[1]) + 1)
+        self.cmd_create = self.cmd_create.replace("<#n#>", self.container_n)
 
         # placeholder for user password
-        if "<password>" in self.cmd_create:
-            self.cmd_create = self.cmd_create.replace("<password>", userpassword)
+        if glob.images[image]["password"]:
+            self.cmd_create = self.cmd_create.replace("<password>", "-e PASSWORD=" + userpassword)
+        else:
+            self.cmd_create = self.cmd_create.replace("<password>", "")
 
-        if "<volume>" in self.cmd_create:
-            if volume in ["none","default"]:
-                self.cmd_create = self.cmd_create.replace("<volume>", "")
-            else:
-                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
+        # placeholder for volume to mount
+        if volume in ["none", "default"]:
+            self.cmd_create = self.cmd_create.replace("<volume>", "")
+        else:
+            self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
 
-        # placeholder for port
-        if "<port>" in self.cmd_create:
+        # placeholder for container defined port
+        if glob.images[image]["exposedPort"]:
             self.port = getNewPort()
-            self.cmd_create = self.cmd_create.replace("<port>", str(self.port))
+            self.cmd_create = self.cmd_create.replace("<port>", str(self.port)+":"+str(glob.images[image]["exposedPort"]))
+        else:
+            self.cmd_create = self.cmd_create.replace("<port>", "")
 
-        print("Create command: " + str(self.cmd_create))
+        # placeholder for CPU and RAM
+        if cpu:
+            self.cmd_create = self.cmd_create.replace("<CPU>", f'--cpus {cpu} ')
+        else:
+            self.cmd_create = self.cmd_create.replace("<CPU>", "")
+
+        if ram:
+            self.cmd_create = self.cmd_create.replace("<RAM>", f'--memory {ram*1048576} ')
+        else:
+            self.cmd_create = self.cmd_create.replace("<RAM>", "")
+
+
+        # placeholder for image name
+        self.cmd_create = self.cmd_create.replace("<image>", image)
 
         # let's create this thing
+        print("[NOTE]: Create command: " + str(self.cmd_create))
         externalCmdLive(self.cmd_create)
 
         # do we need to run it in a browser?
-        try:
-            self.cmd_run = glob.launchCommands[image]["run"]
-            externalCmdLive(self.cmd_run.replace("<port>", str(self.port)))
-        except:
-            pass
+        if glob.images[image]["webapp"]:
+            externalCmdLive(glob.internerBrowser + " http://127.0.0.1:" + str(self.port))
 
 
     # container already created but closed. User wants to re-open it
