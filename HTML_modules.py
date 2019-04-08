@@ -139,7 +139,7 @@ def imageLaunchPad_layout(image):
             '''
     # list available volumes for mounting
     volumes = dockerAPI.listVolumes()
-    listvolumes =  "<option value = image=" + image + "&volume=none> None </option>"
+    listvolumes = "<option value = image=" + image + "&volume=none> None </option>"
     listvolumes += "<option value = image=" + image + "&volume=default> Default </option>"
     for i in range(len(volumes)):
         listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + ">" + volumes.loc[i][1] + "</option>"
@@ -147,11 +147,11 @@ def imageLaunchPad_layout(image):
     html_code += '''<table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white"> '''
     html_code += "    <tr><td>Persistent storage</td>"
     html_code += '''      <td>Do you need to mount a volume in your container? <br>
-                          <select name = "run" size = "4" single> ''' + listvolumes + '''</select>
+                          <select name = "run" size = "4" single selected=image=" + image + "&volume=none> ''' + listvolumes + '''</select>
                           <br>Where should we mount this volume? 
                           <input name = "mountPoint" value= ''' + glob.images[image]["mountPoint"] + '''></td></tr>
                       <tr><td>Performance</td>
-                          <td>How many CPU: <input name = "cpu" value= 1> 
+                          <td>Leave blank for default.<br>How many CPU: <input name = "cpu" value= 1> 
                           <br>how much memory (MB): <input name = "ram" value= 16></td></tr>
                      </table><br><input type=submit class="button" value="Launch !"> 
                     </form>'''
@@ -188,7 +188,7 @@ def dockerImagesDetails_layout(image):
 def dockerInstances_layout(username, role, container_id=None):
 
     # find all the active docker instances for that user, get a dataframe with high level details
-    instances = dockerAPI.listInstances(role= role, username=username)
+    instances = dockerAPI.listInstances(role=role, username=username)
 
     # build HTML code
     html_code = '''
@@ -295,7 +295,6 @@ def dockerInstanceDetails_layout(container_id):
     return html_code
 
 
-
 def dockerVolumes_layout(username, role, volume_id=None):
 
     # fnd all the active docker instances, get a dataframe with high level details
@@ -327,8 +326,6 @@ def dockerVolumes_layout(username, role, volume_id=None):
             html_code += "</td></tr>"
 
         html_code += "</table></form><br>"
-
-
 
         if volume_id != None:
 
@@ -363,7 +360,6 @@ def dockerVolumes_layout(username, role, volume_id=None):
        </form>'''
 
     return html_code
-
 
 
 def footer_layout():

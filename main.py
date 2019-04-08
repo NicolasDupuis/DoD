@@ -196,6 +196,8 @@ class Webpages(object):
     # Actions on Docker images: remove, instantiate, pull
     def actionsImage(self, **kwargs):
 
+        print ("KWARGS: " + str(kwargs))
+
         # unpack parameters
         image = kwargs['run'].split("&")[0].split("=")[1]
         volume = kwargs['run'].split("&")[1].split("=")[1]
