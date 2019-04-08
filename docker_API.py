@@ -49,6 +49,7 @@ class DockerAPI(object):
     def listInstances(self, role, username):
 
         self.ids = []; self.names = []; self.ports = []; self.status = []; self.created = []; self.images = []
+        self.mounts = []
 
         for self.instance in docker.from_env().containers.list():
             self.instance = str(self.instance)
@@ -81,9 +82,12 @@ class DockerAPI(object):
                 # image
                 self.images.append((self.details["Config"][0]["Image"]))
 
-        self.data = list(zip(self.ids, self.names, self.ports, self.status, self.created, self.images))
+                # mounted volumes
+                self.mounts.append(self.details["HostConfig"][0]["Binds"])
 
-        return pd.DataFrame(self.data, columns=['ID', 'Names', 'Ports', 'Status', 'Created', 'Images'])
+        self.data = list(zip(self.ids, self.names, self.ports, self.status, self.created, self.images, self.mounts))
+
+        return pd.DataFrame(self.data, columns=['ID', 'Names', 'Ports', 'Status', 'Created', 'Images', 'Mounts'])
 
 
     def listVolumes(self):

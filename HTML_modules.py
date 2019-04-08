@@ -203,7 +203,8 @@ def dockerInstances_layout(username, role, container_id=None):
                      Image: ''' + str(instances.loc[i][5]) + '''<br> 
                      Created: ''' + str(instances.loc[i][4]) + '''<br>
                      Status: ''' + str(instances.loc[i][3]) + '''<br>
-                     Port: ''' + str(instances.loc[i][2]) + '''<br></td>
+                     Port: ''' + str(instances.loc[i][2]) + '''<br>
+                     Mount: ''' + str(instances.loc[i][6]) + '''<br></td>
                 
                 <td> <a href="/actionsInstance?open=''' + str(instances.loc[i][0]) + '''">
                         <img src="/static/open.png" title = "Open" alt="open" style="width:42px;height:42px;border:0;">
