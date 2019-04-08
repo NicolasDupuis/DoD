@@ -47,16 +47,19 @@ class Glob(object):
 
         # For a given image, 1) how to instantiate the container 2) launch in web browser if possible
         self.launchCommands = {}
-        self.launchCommands["rocker/rstudio"] =         {"create": "docker run --name <userid>_rstudio<#n#> --rm <volume> -dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", \
+        self.launchCommands["rocker/rstudio"] =         {"create": "docker run --name <userid>_rstudio<#n#> --rm <volume>-dp <port>:8787 -e PASSWORD=<password> rocker/rstudio", \
                                                          "run": self.internerBrowser + " http://127.0.0.1:<port>/", \
-                                                         "name": "rstudio"}
+                                                         "name": "Rstudio",\
+                                                         "mountPoint": "/home/rstudio/"}
         self.launchCommands["jupyter/scipy-notebook"] = {"create": "docker run --name <userid>_Jupyter<#n#> -dp <port>:8888 jupyter/scipy-notebook", \
                                                          "run": self.internerBrowser + " 127.0.0.1:<port>/?token=<token>",\
                                                          "name": "Jupyter"}
         self.launchCommands["r-base"] =                 {"create": self.terminal + 'docker run --name <userid>_r<#n#> -ti --rm r-base', \
-                                                         "name": "R"}
+                                                         "name": "R",\
+                                                         "mountPoint": "/media/"}
         self.launchCommands["alpine"] =                 {"create": self.terminal + "docker run --name <userid>_alpine<#n#> -ti --rm alpine", \
-                                                         "name": "Alpine"}
+                                                         "name": "Alpine",\
+                                                         "mountPoint": "/media/"}
         self.launchCommands["hello-world"] =            {"create": self.terminal + "docker run --name <userid>_Helloworld<#n#> -ti --rm hello-world", \
                                                          "name": "HelloWorld"}
 
@@ -155,7 +158,7 @@ class Webpages(object):
     createImage.exposed = True
 
     # Actions on Docker images: remove, instantiate, pull
-    def actionsImage(self, **kwargs):
+    def actionsImage(self, mountPoint=None, **kwargs):
 
         html_code = header_layout()
         html_code += topContainer_Layout()
@@ -166,6 +169,8 @@ class Webpages(object):
             volume = kwargs['run'].split("&")[1].split("=")[1]
         else:
             action, image = list(kwargs.keys())[0].split("_")
+
+        mountPoint += volume
 
         if action in ["pull", "delete", "details"]:
             html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
@@ -180,7 +185,11 @@ class Webpages(object):
                 html_code += dockerImages_layout(self.username, role=self.role, image=image)
 
         elif action == "run":
-            dockerAPI.instantiatelImage(image, role=self.role, username = self.username, userpassword=self.userpassword, volume=volume)
+            dockerAPI.instantiatelImage(image, role=self.role,\
+                                        username=self.username,\
+                                        userpassword=self.userpassword, \
+                                        volume=volume,\
+                                        mountPoint=mountPoint)
             html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
             html_code += dockerInstances_layout(self.username, role=self.role)
 

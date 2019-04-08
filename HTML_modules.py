@@ -43,7 +43,7 @@ def sidebar_layout(username, role, current):
 
     elif role == glob.roles[1]:  # admin
         sections = '<a href="dockerlibrary"   class="w3-bar-item w3-button w3-padding ' + color[0] + '"><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img>  Images library</a>'
-        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><img src = "./static/docker-icon.png"> </img>  Active containers</a>'
+        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><img src = "./static/docker-icon.png" style="width:32px;border:0;"> </img>  Active containers</a>'
         sections += '<a href="volumeslibrary" class="w3-bar-item w3-button w3-padding ' + color[2] + '"><i class="fa fa-users fa-fw"> </i>  Volumes library</a>'
         sections += '<a href="usersMgmt" class="w3-bar-item w3-button w3-padding    ' + color[3] + '"><i class="fa fa-eye fa-fw"></i>  Users management</a>'
 
@@ -89,7 +89,7 @@ def dockerImages_layout(username, role):
 
         for i in range(len(images)):
             html_code += '''
-            <br><td><strong>''' + str(images.loc[i][0]) + '''</strong></td>
+            <br><td><strong>''' + glob.launchCommands[str(images.loc[i][0])]["name"] + '''</strong></td>
             <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
             <tr><td> <img src="/static/''' + str(images.loc[i][0].replace("/","_")) + '''.jpg" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
                 <td> Tag: ''' + str(images.loc[i][1]) + '''<br>
@@ -135,16 +135,20 @@ def createImage_layout(image):
             <header class="w3-container" style="padding-top:22px">
               <h4><b><i class="fa fa-dashboard"></i> Docker image launchpad</b></h4>
             </header> 
-            <br> We're about to run <strong>''' + image + ''' </strong> for you. Just tell us if you need to mount one of these volumes in it:<br>'''
+            <br> We're about to run <strong>''' + image + ''' </strong> for you. Just a few questions first...<br>
+            <br> Do you need to mount a volume in your container?
+            '''
 
     # list available volumes for mounting
     volumes = dockerAPI.listVolumes()
-    listvolumes = "<option value = image=" + image + "&volume=none> None </option>"
-    listvolumes = "<option value = image=" + image + "&volume=default> Default </option>"
+    listvolumes =  "<option value = image=" + image + "&volume=none> None </option>"
+    listvolumes += "<option value = image=" + image + "&volume=default> Default </option>"
     for i in range(len(volumes)):
         listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + ">" + volumes.loc[i][1] + "</option >"
     html_code += '''<br><form action ="/actionsImage" method = GET><select name = "run" size = "4" single> ''' + listvolumes + '''</select>'''
-    html_code += '''<br> <input type=submit class="button" value="Launch !"></form>'''
+    html_code += '''<br><br>Where should we mount this volume? <input name = "mountPoint" value= ''' + glob.launchCommands[image]["mountPoint"] + '''>
+                    <br><br><input type=submit class="button" value="Launch !"> 
+                    </form>'''
 
     return html_code
 
@@ -318,15 +322,7 @@ def dockerVolumes_layout(username, role, volume_id=None):
 
         html_code += "</table></form><br>"
 
-        html_code += '''
-         <form action ="/actionsVolume" method = GET>
-           Create a new volume, please enter a name:
-           <table>
-            <tr><td><input name = "create@na"></td>
-            <td><input type=submit class="button" value="Create!"></td></tr>
-           </table >
-           </form>
-           '''
+
 
         if volume_id != None:
 
@@ -351,8 +347,14 @@ def dockerVolumes_layout(username, role, volume_id=None):
                 html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
                 html_code += "    <td>" + _items + "</td></tr>"
 
-    else:
-        html_code += "There are no docker volumes available at this point."
+    html_code += '''
+     <form action ="/actionsVolume" method = GET>
+       Create a new volume, please enter a name:
+       <table>
+        <tr><td><input name = "create@na"></td>
+        <td><input type=submit class="button" value="Create!"></td></tr>
+       </table >
+       </form>'''
 
     return html_code
 

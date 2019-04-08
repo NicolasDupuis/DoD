@@ -120,7 +120,6 @@ class DockerAPI(object):
         except:
             pass
 
-
     def pauseInstance(self, container_id):
         try:
             externalCmd("docker pause " + container_id)
@@ -140,7 +139,7 @@ class DockerAPI(object):
             pass
 
     # User requested to instantiate an image
-    def instantiatelImage(self, image, role, username, userpassword, volume):
+    def instantiatelImage(self, image, role, username, userpassword, volume, mountPoint):
 
         self.cmd_create = glob.launchCommands[image]["create"]
 
@@ -168,12 +167,11 @@ class DockerAPI(object):
             if volume in ["none","default"]:
                 self.cmd_create = self.cmd_create.replace("<volume>", "")
             else:
-                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":/home/rstudio/" + volume)
+                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
 
         # placeholder for port
         if "<port>" in self.cmd_create:
             self.port = getNewPort()
-            print("Hello")
             self.cmd_create = self.cmd_create.replace("<port>", str(self.port))
 
         print("Create command: " + str(self.cmd_create))
@@ -194,16 +192,17 @@ class DockerAPI(object):
 
         try:
             # let's see if that container has exposed a port, if so, let's run it
-            self.details = dockerAPI.instanceDetails(container_id)["HostConfig"].to_dict()
-            self.port = self.details[0]["PortBindings"]["8787/tcp"][0]["HostPort"]
+            self.port = dockerAPI.instanceDetails(container_id)["HostConfig"].to_dict()[0]["PortBindings"]["8787/tcp"][0]["HostPort"]
             print("Re-opening container " + str(container_id) + " on " + self.port)
             externalCmdLive(glob.internerBrowser + " http://127.0.0.1:" + self.port + "/")
         except:
             try:
-                self.cmd = str(list(self.details[0]["Cmd"])[0])
-                externalCmdLive("konsole -e docker exec -ti "+ container_id + " " + self.cmd)
+                self.dockercmd = dockerAPI.instanceDetails(container_id)["Config"].to_dict()[0]["Cmd"][0]
+                self.cmd = "docker exec -ti " + container_id + " " + str(self.dockercmd)
+                print("Re-open command: " + str(self.cmd))
+                externalCmdLive(glob.terminal + self.cmd)
             except:
-                pass
+                print("Re-open " + str(container_id) + "? Errr, not sure how to do that...")
 
 
     def stopInstance(self, container_id):
