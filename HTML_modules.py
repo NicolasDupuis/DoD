@@ -159,7 +159,7 @@ def imageLaunchPad_layout(image):
                           <input name = "mountPoint" value= ''' + glob.images[image]["mountPoint"] + '''></td></tr>
                       <tr><td>Performance</td>
                           <td>Leave blank for default.<br>How many CPU: <input name = "cpu"> 
-                          <br>how much memory (MB): <input name = "ram"></td></tr>
+                          <br>Max memory (MB): <input name = "ram"></td></tr>
                      </table><br><input type=submit class="button" value="Launch !"> 
                     </form>'''
 
