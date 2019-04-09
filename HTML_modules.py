@@ -138,16 +138,18 @@ def imageLaunchPad_layout(image):
             <br> We're about to run <strong>''' + image + ''' </strong> for you. Just a few questions first...<br>            
             '''
     # list available volumes for mounting
+    listvolumes = "<option value = image=" + image + "&volume=none>None</option>"
+    listvolumes += "<option value = image=" + image + "&volume=none selected='selected'>None</option>"
+    listvolumes += "<option value = image=" + image + "&volume=default >Default</option>"
     volumes = dockerAPI.listVolumes()
-    listvolumes = "<option value = image=" + image + "&volume=none> None </option>"
-    listvolumes += "<option value = image=" + image + "&volume=default> Default </option>"
     for i in range(len(volumes)):
         listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + ">" + volumes.loc[i][1] + "</option>"
+
     html_code += '''<br><form action ="/actionsImage?run_''' + image + '''" method = GET> '''
     html_code += '''<table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white"> '''
     html_code += "    <tr><td>Persistent storage</td>"
     html_code += '''      <td>Do you need to mount a volume in your container? <br>
-                          <select name = "run" size = "4" single selected=image=" + image + "&volume=none> ''' + listvolumes + '''</select>
+                          <select name = "run" size = "4" single ''' + listvolumes + '''</select>
                           <br>Where should we mount this volume? 
                           <input name = "mountPoint" value= ''' + glob.images[image]["mountPoint"] + '''></td></tr>
                       <tr><td>Performance</td>

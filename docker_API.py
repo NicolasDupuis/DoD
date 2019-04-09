@@ -189,7 +189,7 @@ class DockerAPI(object):
             self.cmd_create = self.cmd_create.replace("<CPU>", "")
 
         if ram:
-            self.cmd_create = self.cmd_create.replace("<RAM>", f'--memory {ram*1048576} ')
+            self.cmd_create = self.cmd_create.replace("<RAM>", f'--memory {str(int(ram)*1048576)} ')
         else:
             self.cmd_create = self.cmd_create.replace("<RAM>", "")
 
