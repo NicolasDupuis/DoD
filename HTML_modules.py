@@ -98,9 +98,13 @@ def dockerImages_layout(username, role):
                 <td> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/imageLaunchPad?image=''' + str(images.loc[i][0]) + '''">
-                        <img src="/static/run.jpg" title="Run" alt="run" style="width:42px;height:42px;border:0;">
-                     </a>'''
+                     <a href="/imageLaunchPad?image=''' + str(images.loc[i][0]) + '''&mode=now">
+                        <img src="/static/run.jpg" title="Run" alt="Run now" title="Run now" style="width:42px;height:42px;border:0;">
+                     </a>
+                     <a href="/imageLaunchPad?image=''' + str(images.loc[i][0]) + '''&mode=configure">
+                        <img src="/static/run_configure.png" title="Configure and run" alt="Run" title="Configure and run" style="width:42px;height:42px;border:0;">
+                     </a>
+                     '''
                 
             if role == glob.roles[1]:  # admin
                 html_code += '''<a href="/deleteImage?image=''' + str(images.loc[i][0]) + '''">
@@ -111,7 +115,8 @@ def dockerImages_layout(username, role):
             html_code += "</table>"
 
     else:
-        html_code += "There are no docker images available at this point."
+        html_code += '''<center><br><br><br><img src="/static/empty_box.jpg" alt="empty box"> '''
+        html_code += "Sorry, no Docker images available...</center>"
 
     if role == glob.roles[1]:  # admin
         html_code += ''' <br><br>
@@ -153,8 +158,8 @@ def imageLaunchPad_layout(image):
                           <br>Where should we mount this volume? 
                           <input name = "mountPoint" value= ''' + glob.images[image]["mountPoint"] + '''></td></tr>
                       <tr><td>Performance</td>
-                          <td>Leave blank for default.<br>How many CPU: <input name = "cpu" value= 1> 
-                          <br>how much memory (MB): <input name = "ram" value= 16></td></tr>
+                          <td>Leave blank for default.<br>How many CPU: <input name = "cpu"> 
+                          <br>how much memory (MB): <input name = "ram"></td></tr>
                      </table><br><input type=submit class="button" value="Launch !"> 
                     </form>'''
 
@@ -259,7 +264,8 @@ def dockerInstances_layout(username, role):
             </table></form><br> '''
 
     else:
-        html_code += "There are no docker instances available at this point."
+        html_code += '''<center><br><br><br><img src="/static/empty_box.jpg" alt="empty box"> '''
+        html_code += "Sorry, no docker instances available...</center>"
 
     return html_code
 

@@ -93,11 +93,10 @@ class Webpages(object):
 
         html_code += '''<br><br><br><br>          
         
-        <center><img src="/static/d-wise-logo.jpg" alt="Logo" style="width:400px;border:0;"><br>
+        <center><img src="/static/d-wise-logo.jpg" alt="Logo" style="width:300px;border:0;">
          <form action ="/login" method = GET>
-          <h3> <strong><i>'on demand'</strong></i></h3>
+          <h4><strong><i>'on demand'</strong></i></h4>
           <h5> - a prototype by Nicolas and Andy -</h3><br>
-          
         <table style="width:30%">
           <tr>
             <th>Name</th>
@@ -167,10 +166,8 @@ class Webpages(object):
     imageDetails.exposed = True
 
     def imageSettings(self, **kwargs):
-        print("KWARGS: " + str(kwargs))
 
         image = kwargs["image"]
-
         for item in list(kwargs.keys()):
             if item != "image":
                 glob.images[image][item] = kwargs[item]
@@ -184,11 +181,24 @@ class Webpages(object):
     imageSettings.exposed = True
 
     # Display the details of a specific image
-    def imageLaunchPad(self, image):
+    def imageLaunchPad(self, **kwargs):
+
+        image, mode = kwargs["image"], kwargs["mode"]
+
         html_code = header_layout()
         html_code += topContainer_Layout()
-        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
-        html_code += imageLaunchPad_layout(image=image)
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
+        if mode == "configure":
+            html_code += imageLaunchPad_layout(image=image)
+        elif mode == "now":
+            # create the image now
+            dockerAPI.instantiatelImage(image,
+                                        role=self.role,
+                                        username=self.username,
+                                        userpassword=self.userpassword)
+
+            html_code += dockerInstances_layout(self.username, role=self.role)
+
         html_code += footer_layout()
         return html_code
     imageLaunchPad.exposed = True

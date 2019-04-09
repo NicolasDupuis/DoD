@@ -140,12 +140,12 @@ class DockerAPI(object):
 
 
     # Instantiate an image
-    def instantiatelImage(self, image, role, username, userpassword, volume, mountPoint, cpu, ram):
+    def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
 
         if glob.images[image]["webapp"] == True:
             self.cmd_create = "docker run --name <userid>_<nickname><#n#> --rm <volume>-dp <port> <password> <CPU><RAM><image>"
         else:
-            self.cmd_create = "docker run --name <userid>_<nickname><#n#> <volume>-ti --rm <image>"
+            self.cmd_create = glob.terminal + "docker run --name <userid>_<nickname><#n#> <volume>-ti --rm <image>"
 
         # placeholder for container's future name: 3 parts (user ID, image nickname, increment integer)
         # 1) user ID
@@ -170,10 +170,13 @@ class DockerAPI(object):
             self.cmd_create = self.cmd_create.replace("<password>", "")
 
         # placeholder for volume to mount
-        if volume in ["none", "default"]:
-            self.cmd_create = self.cmd_create.replace("<volume>", "")
+        if volume:
+            if volume in ["none", "default"]:
+                self.cmd_create = self.cmd_create.replace("<volume>", "")
+            else:
+                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
         else:
-            self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
+            self.cmd_create = self.cmd_create.replace("<volume>", "")
 
         # placeholder for container defined port
         if glob.images[image]["exposedPort"]:
