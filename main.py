@@ -48,31 +48,36 @@ class Glob(object):
         # Images details, to be controlled by the admin. Will end up in a database.
         self.images = {}
 
-        self.images["rocker/rstudio"] = {"password": True,
+        self.images["rocker/rstudio"] = {"validated": False,
+                                         "password": True,
                                          "exposedPort": 8787,
                                          "webapp": True,
                                          "nickname": "Rstudio",
                                          "mountPoint": "/home/rstudio/"}
 
-        self.images["jupyter/scipy-notebook"] = {"exposedPort": 8888,
+        self.images["jupyter/scipy-notebook"] = {"validated": False,
+                                                 "exposedPort": 8888,
                                                  "webapp": True,
                                                  "password": False,
                                                  "addURL": "?token=<token>",
                                                  "nickname": "Jupyter"}
 
-        self.images["r-base"] = {"nickname": "R",
+        self.images["r-base"] = {"validated": False,
+                                 "nickname": "R",
                                  "exposedPort": None,
                                  "webapp": False,
                                  "password": False,
                                  "mountPoint": "/media/"}
 
-        self.images["alpine"] = {"nickname": "Alpine",
+        self.images["alpine"] = {"validated": False,
+                                 "nickname": "Alpine",
                                  "exposedPort": None,
                                  "webapp": False,
                                  "password": False,
                                  "mountPoint": "/media/"}
 
-        self.images["hello-world"] = {"nickname": "Hello World!",
+        self.images["hello-world"] = {"validated": False,
+                                      "nickname": "Hello World!",
                                       "exposedPort": None,
                                       "webapp": False,
                                       "password": False}
