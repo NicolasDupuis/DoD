@@ -160,17 +160,34 @@ def imageLaunchPad_layout(image):
 
     return html_code
 
-def dockerImagesDetails_layout(image):
+def dockerImagesDetails_layout(role, image):
+
+    if role == glob.roles[1]:  # admin
+        disabled = ""
+    else:
+        disabled = "disabled"
+
     html_code = '''<!-- !PAGE CONTENT! -->
       <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-
         <!-- Header -->
         <header class="w3-container" style="padding-top:22px">
-          <h4><b><i class="fa fa-dashboard"></i> Details for image "''' + image  + '''"</b></h4>
+          <h4><b><i class="fa fa-dashboard"></i> Details for image "''' + image + '''"</b></h4>
         </header>
-        <div class="w3-container">
-           <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-            <tr><th>Item</th><th>Value</th></tr><tr> '''
+        <h3>App settings</h3>
+        <img src="/static/''' + str(image.replace("/", "_")) + '''.jpg" alt=Logo style="width:100px;border:0;">
+        <form action ="/imageSettings" method=GET>
+        <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
+        <tr><td>Image name</td><td><input name = "image" value =''' + image + ''' ''' + disabled + ''' ></td></tr>'''
+
+    for item in list(glob.images[image].keys()):
+        html_code += '''<tr><td>''' + item + '''</td>
+                       <td><input name = "''' + item + '''" value=''' + str(glob.images[image][item]) + ''' ''' + disabled + '''
+                        </td></tr>'''
+
+    html_code +=''' </table><br><input type=submit class="button" value="Update" ''' + disabled + '''></form>
+                    <br><h3>Docker low-level details</h3>
+                    <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+                    <tr><th>Item</th><th>Value</th></tr><tr> '''
 
     details = dockerAPI.imageDetails(image)  # get a dataframe
     for i in range(len(details.columns)):
@@ -184,10 +201,12 @@ def dockerImagesDetails_layout(image):
         html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
         html_code += "    <td>" + _items + "</td></tr>"
 
+    html_code += "</table></div>"
+
     return html_code
 
 
-def dockerInstances_layout(username, role, container_id=None):
+def dockerInstances_layout(username, role):
 
     # find all the active docker instances for that user, get a dataframe with high level details
     instances = dockerAPI.listInstances(role=role, username=username)

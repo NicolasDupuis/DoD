@@ -156,10 +156,27 @@ class Webpages(object):
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
-        html_code += dockerImagesDetails_layout(image=image)
+        html_code += dockerImagesDetails_layout(role=self.role, image=image)
         html_code += footer_layout()
         return html_code
     imageDetails.exposed = True
+
+    def imageSettings(self, **kwargs):
+        print("KWARGS: " + str(kwargs))
+
+        image = kwargs["image"]
+
+        for item in list(kwargs.keys()):
+            if item != "image":
+                glob.images[image][item] = kwargs[item]
+
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += dockerImagesDetails_layout(role=self.role, image=image)
+        html_code += footer_layout()
+        return html_code
+    imageSettings.exposed = True
 
     # Display the details of a specific image
     def imageLaunchPad(self, image):
