@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import subprocess
 import socket
+import time
 
 # Run external command, returns stdout
 def externalCmd(cmd):
@@ -59,6 +60,9 @@ class Glob(object):
                                                  "exposedPort": 8888,
                                                  "webapp": True,
                                                  "password": False,
+                                                 "mountPoint": "/home/jovyan/",
+                                                 "GID": "1000",
+                                                 "postadd": "start-notebook.sh --NotebookApp.token='abcd12345'",
                                                  "addURL": "?token=<token>",
                                                  "nickname": "Jupyter"}
 

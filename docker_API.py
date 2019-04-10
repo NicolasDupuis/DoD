@@ -141,7 +141,7 @@ class DockerAPI(object):
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
 
         if glob.images[image]["webapp"] == True:
-            self.cmd_create = "docker run --name <userid>_<nickname><#n#> --rm <volume>-dp <port> <password> <CPU><RAM><image>"
+            self.cmd_create = "docker run --name <userid>_<nickname><#n#> --rm <volume><GID>-dp <port><password> <CPU><RAM><image>"
         else:
             self.cmd_create = glob.terminal + "docker run --name <userid>_<nickname><#n#> <volume>-ti --rm <image>"
 
@@ -194,6 +194,19 @@ class DockerAPI(object):
         else:
             self.cmd_create = self.cmd_create.replace("<RAM>", "")
 
+        # use a different GID
+        try:
+            if glob.images[image]["GID"]:
+                self.cmd_create = self.cmd_create.replace("<GID>", "-e NB_GID=" + glob.images[image]["GID"] + " ")
+        except:
+            self.cmd_create = self.cmd_create.replace("<GID>", "")
+
+        # add stuff
+        try:
+            if glob.images[image]["postadd"]:
+                self.cmd_create += " " + glob.images[image]["postadd"]
+        except:
+            pass
 
         # placeholder for image name
         self.cmd_create = self.cmd_create.replace("<image>", image)
@@ -204,7 +217,14 @@ class DockerAPI(object):
 
         # do we need to run it in a browser?
         if glob.images[image]["webapp"]:
-            externalCmdLive(glob.internerBrowser + " http://127.0.0.1:" + str(self.port))
+            self.cmd_run = glob.internerBrowser + " http://127.0.0.1:" + str(self.port)
+
+            if image == "jupyter/scipy-notebook":
+                self.cmd_run += "?token=abcd12345"
+
+            print("[NOTE]: Run command: " + str(self.cmd_run))
+            time.sleep(2)
+            externalCmdLive(self.cmd_run)
 
 
     # container already created but closed. User wants to re-open it
@@ -228,6 +248,6 @@ class DockerAPI(object):
     def stopInstance(self, container_id):
         # send SIGTERM signal, trying a gracefull shutdown. SIGKILL is sent after a grace period.
         try:
-            externalCmd("docker stop " + container_id)
+            externalCmd("docker stop " + container_id + " && docker rm " + container_id)
         except:
             print("Couldn't stop")

@@ -402,7 +402,7 @@ def volumeDetails_layout(volume):
         html_code += '''<tr><td>''' + str(list(details.columns)[i]) + '''</td>
                         <td> ''' + _items + '''</td></tr>'''
 
-    html_code+= "</table>"
+    html_code += "</table>"
 
     return html_code
 
