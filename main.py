@@ -31,7 +31,7 @@ class Glob(object):
     def __init__(self):
 
         self.internerBrowser = "firefox"
-        self.terminal = "xterm -e "
+        self.terminal = "xterm -e "  # to run external commands in a terminal
 
         self.roles = ["User", "Admin"]
 
@@ -312,17 +312,24 @@ class Webpages(object):
     ########################################################################
 
     # page listing all the docker volumes available
-    def volumeslibrary(self, volume_id=None):
+    def volumeslibrary(self):
         html_code  = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
-        if volume_id == None:
-            html_code += dockerVolumes_layout(self.username, role=self.role)
-        else:
-            html_code += dockerVolumes_layout(self.username, role=self.role, volume_id=volume_id)
+        html_code += dockerVolumes_layout()
         html_code += footer_layout()
         return html_code
     volumeslibrary.exposed = True
+
+    # Details on a specific volume
+    def volumeDetails(self, volume_id):
+        html_code  = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
+        html_code += volumeDetails_layout(volume_id=volume_id)
+        html_code += footer_layout()
+        return html_code
+    volumeDetails.exposed = True
 
     # Actions on an active Docker instances: stop, pause, unpause, restart or get lower level details
     def actionsVolume(self, **kwargs):
@@ -340,9 +347,9 @@ class Webpages(object):
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
         if actions == "details":
-            html_code += dockerVolumes_layout(self.username, role=self.role, volume_id=volume_id)
+            html_code += volumeDetails_layout(volume_id=volume_id)
         else:
-            html_code += dockerVolumes_layout(self.username, role=self.role)
+            html_code += dockerVolumes_layout()
         html_code += footer_layout()
         return html_code
     actionsVolume.exposed = True

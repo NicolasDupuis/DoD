@@ -322,7 +322,7 @@ def dockerInstanceDetails_layout(container_id):
     return html_code
 
 
-def dockerVolumes_layout(username, role, volume_id=None):
+def dockerVolumes_layout():
 
     # fnd all the active docker instances, get a dataframe with high level details
     volumes = dockerAPI.listVolumes()
@@ -353,38 +353,48 @@ def dockerVolumes_layout(username, role, volume_id=None):
             html_code += "</td></tr>"
 
         html_code += "</table></form><br>"
-
-        if volume_id != None:
-
-            html_code += ''' 
-              Details for volume <strong>''' + volume_id  + ''' </strong>:
-              <div class="w3-container">
-               <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-              <tr>
-             <th>Item</th>
-             <th>Value</th>                
-             </tr><tr> '''
-
-            details = dockerAPI.volumeDetails(volume_id)  # get a dataframe
-            for i in range(len(details.columns)):
-                _items = ""
-                if isinstance(details.loc[0][i], dict):
-                    for item in details.loc[0][i] :
-                        _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
-                else:
-                    _items = str(details.loc[0][i])
-
-                html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
-                html_code += "    <td>" + _items + "</td></tr>"
+    else:
+        html_code += '''<center><br><br><br><img src="/static/empty_box.jpg" alt="empty box"> '''
+        html_code += "Sorry, no volumes available...</center>"
 
     html_code += '''
-     <form action ="/actionsVolume" method = GET>
+     <br><br><form action ="/actionsVolume" method = GET>
        Create a new volume, please enter a name:
        <table>
         <tr><td><input name = "create@na"></td>
         <td><input type=submit class="button" value="Create!"></td></tr>
        </table >
        </form>'''
+
+    return html_code
+
+
+def volumeDetails_layout(volume_id):
+    # build HTML code
+    html_code = '''
+        <!-- !PAGE CONTENT! -->
+        <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+        <!-- Header -->
+        <header class="w3-container" style="padding-top:22px">
+         <h4> Details for Docker volume <strong>''' + volume_id + '''</strong></h4>
+        </header>
+        <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+        <tr>
+        <th>Item</th>
+        <th>Value</th>                
+        </tr><tr> '''
+
+    details = dockerAPI.volumeDetails(volume_id)  # get a dataframe
+    for i in range(len(details.columns)):
+        _items = ""
+        if isinstance(details.loc[0][i], dict):
+            for item in details.loc[0][i]:
+                _items += item + ": " + str(details.loc[0][i][item]) + "<br>"
+        else:
+            _items = str(details.loc[0][i])
+
+        html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
+        html_code += "    <td>" + _items + "</td></tr>"
 
     return html_code
 
