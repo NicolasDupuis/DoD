@@ -28,21 +28,19 @@ class DockerAPI(object):
         self.stdout = externalCmd("docker images")
         return pd.read_fwf(StringIO(self.stdout), widths=[max(20, self.longestImageName()), 20, 20, 20, 20])
 
-
     def imageDetails(self, image):
         # Create a Dataframe listing details of a specific docker image
         self.stdout = externalCmd("docker inspect " + image)
         return pd.read_json(self.stdout)
-
 
     def instanceDetails(self, container_id):
         # Create a Dataframe listing details of a specific docker instance
         self.stdout = externalCmd("docker inspect " + container_id)
         return pd.read_json(self.stdout)
 
-    def volumeDetails(self, volume_id):
+    def volumeDetails(self, volume):
         # Create a Dataframe listing details of a specific docker instance
-        self.stdout = externalCmd("docker volume inspect " + volume_id)
+        self.stdout = externalCmd("docker volume inspect " + volume)
         return pd.read_json(self.stdout)
 
     # Create a Dataframe listing all the docker instances
@@ -102,11 +100,11 @@ class DockerAPI(object):
         except:
             pass
 
-    def createVolume(self, volume):
-        try:
-            self.stdout = externalCmd("docker volume create " + volume)
-        except:
-            pass
+    def createVolume(self, volume, root_password):
+        self.stdout = externalCmd("docker volume create " + volume)
+        mountpoint = self.volumeDetails(volume).loc[0]["Mountpoint"]
+        os.system('echo %s|sudo -S %s' % (root_password, "chmod 775 " + mountpoint))
+        os.system('echo %s|sudo -S %s' % (root_password, "chgrp 1000 " + mountpoint))
 
     def removeImage(self, image):
         try:
@@ -114,9 +112,9 @@ class DockerAPI(object):
         except:
             pass
 
-    def deleteVolume(self, volume_id):
+    def deleteVolume(self, volume):
         try:
-            externalCmd("docker volume rm " + volume_id)
+            externalCmd("docker volume rm " + volume)
         except:
             pass
 

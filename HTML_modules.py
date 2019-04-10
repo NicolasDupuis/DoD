@@ -348,9 +348,13 @@ def dockerVolumes_layout():
         for i in range(len(volumes)):
             html_code += "<tr><td>" + str(volumes.loc[i][0]) + "</td>"
             html_code += "    <td>" + str(volumes.loc[i][1]) + "</td>"
-            html_code += '''  <td> <input type="submit" name = "details@''' + str(volumes.loc[i][1]) + '''" value="Details">  '''
-            html_code += '''       <input type="submit" name = "delete@''' + str(volumes.loc[i][1]) + '''" value="Delete">  '''
-            html_code += "</td></tr>"
+            html_code += '''  <td> 
+              <a href="/actionsVolume?action=details&volume=''' + str(volumes.loc[i][1])  + '''">
+                <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
+              </a>   
+              <a href="/actionsVolume?action=delete&volume=''' + str(volumes.loc[i][1]) + '''">
+                <img src="/static/delete.jpg" title="Delete" alt="details" style="width:42px;height:42px;border:0;">
+              </a></td></tr> '''
 
         html_code += "</table></form><br>"
     else:
@@ -358,33 +362,35 @@ def dockerVolumes_layout():
         html_code += "Sorry, no volumes available...</center>"
 
     html_code += '''
-     <br><br><form action ="/actionsVolume" method = GET>
-       Create a new volume, please enter a name:
+     <br><hr><form action ="/createVolume" method = GET>
+       <h3>Create a new volume</h3>
        <table>
-        <tr><td><input name = "create@na"></td>
-        <td><input type=submit class="button" value="Create!"></td></tr>
-       </table >
+        <tr><td>Volume name</td><td><input name = "volume"></td></tr>
+        <tr><td>Root password</td><td><input name="root_password" type="password" placeholder="Enter the root password"/</td></tr>
+        </table ><br>
+        <input type=submit class="button" value="Create!"></td></tr>
        </form>'''
 
     return html_code
 
 
-def volumeDetails_layout(volume_id):
+def volumeDetails_layout(volume):
     # build HTML code
     html_code = '''
         <!-- !PAGE CONTENT! -->
         <div class="w3-main" style="margin-left:300px;margin-top:43px;">
         <!-- Header -->
         <header class="w3-container" style="padding-top:22px">
-         <h4> Details for Docker volume <strong>''' + volume_id + '''</strong></h4>
+         <h4> Details for Docker volume <strong>''' + volume + '''</strong></h4>
         </header>
         <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
         <tr>
         <th>Item</th>
         <th>Value</th>                
-        </tr><tr> '''
+        </tr>'''
 
-    details = dockerAPI.volumeDetails(volume_id)  # get a dataframe
+    details = dockerAPI.volumeDetails(volume)  # get a dataframe
+
     for i in range(len(details.columns)):
         _items = ""
         if isinstance(details.loc[0][i], dict):
@@ -393,8 +399,10 @@ def volumeDetails_layout(volume_id):
         else:
             _items = str(details.loc[0][i])
 
-        html_code += "<tr><td>" + str(list(details.columns)[i]) + "</td>"
-        html_code += "    <td>" + _items + "</td></tr>"
+        html_code += '''<tr><td>''' + str(list(details.columns)[i]) + '''</td>
+                        <td> ''' + _items + '''</td></tr>'''
+
+    html_code+= "</table>"
 
     return html_code
 

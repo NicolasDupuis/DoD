@@ -87,30 +87,29 @@ class Webpages(object):
     # HTTP request objects
 
     def index(self):
-
         html_code = header_layout()
         html_code += topContainer_Layout()
 
         html_code += '''<br><br><br><br>          
-        
-        <center><img src="/static/d-wise-logo.jpg" alt="Logo" style="width:300px;border:0;">
-         <form action ="/login" method = GET>
-          <h4><strong><i>'on demand'</strong></i></h4>
-          <h5> - a prototype by Nicolas and Andy -</h3><br>
-        <table style="width:30%">
-          <tr>
-            <th>Name</th>
-            <td><td><input name = "username"></td>
-          </tr>
-          <tr>
-            <th>Password</th>
-            <td><td><input type="password" name="userpassword"></td>
-          </tr>
-        </table><br>
-        <input type=submit class="button" value="Login">
 
-         </form>          
-         <p><a href="http://www.d-wise.com">Visit d-wise.com!</a></p></center>'''
+                <center><img src="/static/d-wise-logo.jpg" alt="Logo" style="width:300px;border:0;">
+                 <form action ="/login" method = GET>
+                  <h4><strong><i>'on demand'</strong></i></h4>
+                  <h5> - a prototype by Nicolas and Andy -</h3><br>
+                <table style="width:30%">
+                  <tr>
+                    <th>Name</th>
+                    <td><td><input name = "username"></td>
+                  </tr>
+                  <tr>
+                    <th>Password</th>
+                    <td><td><input type="password" name="userpassword"></td>
+                  </tr>
+                </table><br>
+                <input type=submit class="button" value="Login">
+
+                 </form>          
+                 <p><a href="http://www.d-wise.com">Visit d-wise.com!</a></p></center>'''
 
         html_code += footer_layout()
 
@@ -255,7 +254,7 @@ class Webpages(object):
         return html_code
     actionsImage.exposed = True
 
-
+    ########################################################################
     # Docker Instances
     ########################################################################
 
@@ -307,7 +306,7 @@ class Webpages(object):
         return html_code
     actionsInstance.exposed = True
 
-
+    ########################################################################
     # Volumes library
     ########################################################################
 
@@ -322,32 +321,43 @@ class Webpages(object):
     volumeslibrary.exposed = True
 
     # Details on a specific volume
-    def volumeDetails(self, volume_id):
+    def volumeDetails(self, volume):
         html_code  = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
-        html_code += volumeDetails_layout(volume_id=volume_id)
+        html_code += volumeDetails_layout(volume=volume)
         html_code += footer_layout()
         return html_code
     volumeDetails.exposed = True
 
-    # Actions on an active Docker instances: stop, pause, unpause, restart or get lower level details
-    def actionsVolume(self, **kwargs):
+    # Create a volume
+    def createVolume(self, **kwargs):
 
-        actions, volume_id = list(kwargs.keys())[0].split("@")
-
-        if actions == "details":
-            dockerAPI.volumeDetails(volume_id)
-        elif actions == "delete":
-            dockerAPI.deleteVolume(volume_id)
-        elif actions == "create":
-            dockerAPI.createVolume(kwargs["create@na"])
+        dockerAPI.createVolume(volume=kwargs["volume"], root_password=kwargs["root_password"])
 
         html_code  = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
-        if actions == "details":
-            html_code += volumeDetails_layout(volume_id=volume_id)
+        html_code += dockerVolumes_layout()
+        html_code += footer_layout()
+        return html_code
+    createVolume.exposed = True
+
+    # Actions on an active Docker instances: stop, pause, unpause, restart or get lower level details
+    def actionsVolume(self, **kwargs):
+
+        action, volume = kwargs["action"], kwargs["volume"]
+
+        if action == "details":
+            dockerAPI.volumeDetails(volume)
+        elif action == "delete":
+            dockerAPI.deleteVolume(volume)
+
+        html_code  = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="volumeslibrary")
+        if action == "details":
+            html_code += volumeDetails_layout(volume=volume)
         else:
             html_code += dockerVolumes_layout()
         html_code += footer_layout()
