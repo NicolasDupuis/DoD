@@ -29,8 +29,12 @@ class DockerAPI(object):
         return pd.read_fwf(StringIO(self.stdout), widths=[max(20, self.longestImageName()), 20, 20, 20, 20])
 
     def imageDetails(self, image):
+        # get image ID (for both hub's and cloned images)
+        self.images = dockerAPI.listImages()
+        self.image_id = list(self.images[self.images["REPOSITORY"] == image]["IMAGE ID"])[0]
+
         # Create a Dataframe listing details of a specific docker image
-        self.stdout = externalCmd("docker inspect " + image)
+        self.stdout = externalCmd("docker inspect " + self.image_id)
         return pd.read_json(self.stdout)
 
     def instanceDetails(self, container_id):
@@ -44,9 +48,9 @@ class DockerAPI(object):
         return pd.read_json(self.stdout)
 
     # Create a Dataframe listing all the docker instances
-    def listInstances(self, role, username):
+    def listInstances(self, role=None, username=None):
 
-        self.ids = []; self.names = []; self.ports = []; self.status = []; self.created = []; self.images = []
+        self.ids = []; self.names = []; self.ports = []; self.status = []; self.created = []; self.imagestoappend = []
         self.mounts = []
 
         for self.instance in docker.from_env().containers.list():
@@ -56,8 +60,8 @@ class DockerAPI(object):
 
             self.details = dockerAPI.instanceDetails(self.instance).to_dict()
 
-            # Admins: shows all containers. Users: only show theirs
-            if role == glob.roles[1] or username in self.details["Name"][0][1:]:
+            # Admins: shows all containers. Users: only show theirs. If no info, show all
+            if not(role) or (role == glob.roles[1] or username in self.details["Name"][0][1:]):
 
                 # container id
                 self.ids.append(self.details["Id"][0])
@@ -65,10 +69,17 @@ class DockerAPI(object):
                 # names
                 self.names.append(self.details["Name"][0][1:])
 
+                # image
+                self.image_id = self.details["Config"][0]["Image"]
+                self.allimages = self.listImages()
+                self.image = list(self.allimages[self.allimages["IMAGE ID"] == self.image_id]["REPOSITORY"])[0]
+                self.imagestoappend.append(self.image)
+
                 # ports
-                try:
-                    self.ports.append(self.details["HostConfig"][0]["PortBindings"]["8787/tcp"][0]["HostPort"])
-                except:
+                if glob.images[self.image]["exposedPort"] in ["True", True]:
+                    self.exposedPort = str(glob.images[self.image]["exposedPort"])
+                    self.ports.append(self.details["HostConfig"][0]["PortBindings"][self.exposedPort + "/tcp"][0]["HostPort"])
+                else:
                     self.ports.append("N/A")
 
                 # status
@@ -77,13 +88,10 @@ class DockerAPI(object):
                 # created
                 self.created.append(self.details["Created"][0])
 
-                # image
-                self.images.append((self.details["Config"][0]["Image"]))
-
                 # mounted volumes
                 self.mounts.append(self.details["HostConfig"][0]["Binds"])
 
-        self.data = list(zip(self.ids, self.names, self.ports, self.status, self.created, self.images, self.mounts))
+        self.data = list(zip(self.ids, self.names, self.ports, self.status, self.created, self.imagestoappend, self.mounts))
 
         return pd.DataFrame(self.data, columns=['ID', 'Names', 'Ports', 'Status', 'Created', 'Images', 'Mounts'])
 
@@ -106,8 +114,12 @@ class DockerAPI(object):
         os.system('echo %s|sudo -S %s' % (root_password, "chgrp 1000 " + mountpoint))
 
     def removeImage(self, image):
+        # get image ID (for both hub's and cloned images)
+        self.images = dockerAPI.listImages()
+        self.image_id = self.images[self.images["REPOSITORY"] == image].loc[0]["IMAGE ID"]
+
         try:
-            externalCmd("docker rmi --force " + image)
+            externalCmd("docker rmi --force " + image_id)
         except:
             pass
 
@@ -135,22 +147,30 @@ class DockerAPI(object):
         except:
             pass
 
-    def cloneImage(self, container_id, newimage, tag):
+    def commitContainer(self, old_image, container_id, new_image, tag):
 
         # commit the container changes to a new image
-        externalCmd("docker commit " + container_id + " " + newimage + ":" + tag)
+        externalCmd("docker commit " + container_id + " " + new_image + ":" + tag)
 
         # inherit image properties
-        image = self.instanceDetails(container_id)["Config"][0]["Image"]
-        glob.images[newimage] = glob.images[image]
+        glob.images[new_image] = glob.images[old_image]
+
+        # save to json
+        with open('images.json', 'w') as fp:
+            json.dump(glob.images, fp)
 
 
     # Instantiate an image
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
 
-        if glob.images[image]["webapp"] == True:
+        # get image ID (for both hub's and cloned images)
+        self.images = dockerAPI.listImages()
+
+        if glob.images[image]["webapp"] in ["True", True]:
+            print("Webapp")
             self.cmd_create = "docker run --name <userid>_<nickname><#n#>--rm <volume>-dp <port><password><CPU><RAM><user><GID><image>"
         else:
+            print("Terminal")
             self.cmd_create = glob.terminal + "docker run --name <userid>_<nickname><#n#><volume>-ti --rm <image>"
 
         # placeholder for container's future name: 3 parts (user ID, image nickname, increment integer)
@@ -180,7 +200,7 @@ class DockerAPI(object):
             if volume == "None":
                 self.cmd_create = self.cmd_create.replace("<volume>", "")
             else:
-                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
+                self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + volume + " ")
         else:
             self.cmd_create = self.cmd_create.replace("<volume>", "")
 
@@ -222,8 +242,12 @@ class DockerAPI(object):
         except:
             pass
 
+        self.images = dockerAPI.listImages()
+        self.image_id = list(self.images[self.images["REPOSITORY"] == image]["IMAGE ID"])[0]
+        print("IMAGE_ID#2 " + str(self.image_id))
+
         # placeholder for image name
-        self.cmd_create = self.cmd_create.replace("<image>", image)
+        self.cmd_create = self.cmd_create.replace("<image>", self.image_id)
 
         # let's create this thing
         print("[NOTE]: Create command: " + str(self.cmd_create))
@@ -233,7 +257,7 @@ class DockerAPI(object):
         if glob.images[image]["webapp"]:
             self.cmd_run = glob.internerBrowser + " http://127.0.0.1:" + str(self.port)
 
-            if image == "jupyter/scipy-notebook":  # ugly hardcode
+            if glob.images[image]["nickname"] == "Jupyter":  # ugly hardcode
                 self.cmd_run += "?token=abcd12345"
 
             print("[NOTE]: Run command: " + str(self.cmd_run))
@@ -244,19 +268,25 @@ class DockerAPI(object):
     # container already created but closed. User wants to re-open it
     def openInstance(self, container_id):
 
-        try:
-            # let's see if that container has exposed a port, if so, let's run it
-            self.port = dockerAPI.instanceDetails(container_id)["HostConfig"].to_dict()[0]["PortBindings"]["8787/tcp"][0]["HostPort"]
+        # let's find the image name corresponding to that container ID
+        self.image_id = dockerAPI.instanceDetails(container_id)["Config"][0]["Image"]
+        self.images = dockerAPI.listImages()
+        self.image = list(self.images[self.images["IMAGE ID"] == self.image_id]["REPOSITORY"])[0]
+        self.exposedPort = str(glob.images[self.image]["exposedPort"])
+
+        if glob.images[self.image]["webapp"] in ["True", True]:
+            self.port = dockerAPI.instanceDetails(container_id)["HostConfig"].to_dict()[0]["PortBindings"]
+            self.port = self.port[self.exposedPort + "/tcp"][0]["HostPort"]
             print("Re-opening container " + str(container_id) + " on " + self.port)
             externalCmdLive(glob.internerBrowser + " http://127.0.0.1:" + self.port + "/")
-        except:
-            try:
-                self.dockercmd = dockerAPI.instanceDetails(container_id)["Config"].to_dict()[0]["Cmd"][0]
-                self.cmd = "docker exec -ti " + container_id + " " + str(self.dockercmd)
-                print("Re-open command: " + str(self.cmd))
-                externalCmdLive(glob.terminal + self.cmd)
-            except:
-                print("Re-open " + str(container_id) + "? Errr, not sure how to do that...")
+        else:
+            self.dockercmd = dockerAPI.instanceDetails(container_id)["Config"].to_dict()[0]["Cmd"][0]
+            self.cmd = "docker exec -ti " + container_id + " " + str(self.dockercmd)
+            print("Re-open command: " + str(self.cmd))
+            externalCmdLive(glob.terminal + self.cmd)
+
+    PortBindings: {'8787/tcp': [{'HostIp': '', 'HostPort': '8501'}]}
+    PortBindings: {'8888/tcp': [{'HostIp': '', 'HostPort': '8500'}]}
 
 
     def stopInstance(self, container_id):

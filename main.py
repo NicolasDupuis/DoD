@@ -4,6 +4,7 @@ import os
 import subprocess
 import socket
 import time
+import json
 
 # Run external command, returns stdout
 def externalCmd(cmd):
@@ -46,51 +47,9 @@ class Glob(object):
         self.userpassword["Andy"] = "_andy"
         self.userpassword["Jordan"] = "_jordan"
 
-        # Images details, to be controlled by the admin. Will end up in a database.
-        self.images = {}
-
-        self.images["rocker/rstudio"] = {"mountDefault": "None",
-                                         "validated": True,
-                                         "password": True,
-                                         "exposedPort": 8787,
-                                         "webapp": True,
-                                         "nickname": "Rstudio",
-                                         "mountPoint": "/home/rstudio/"}
-
-        self.images["jupyter/scipy-notebook"] = {"mountDefault": "None",
-                                                 "validated": False,
-                                                 "exposedPort": 8888,
-                                                 "webapp": True,
-                                                 "password": False,
-                                                 "mountPoint": "/home/jovyan/",
-                                                 "forceGID": "1000",
-                                                 "user": "root",
-                                                 "postadd": "start-notebook.sh --NotebookApp.token='abcd12345'",
-                                                 "addURL": "?token=<token>",
-                                                 "nickname": "Jupyter"}
-
-        self.images["r-base"] = {"mountDefault": "None",
-                                 "validated": False,
-                                 "nickname": "R",
-                                 "exposedPort": None,
-                                 "webapp": False,
-                                 "password": False,
-                                 "mountPoint": "/media/"}
-
-        self.images["alpine"] = {"mountDefault": "None",
-                                 "validated": False,
-                                 "nickname": "Alpine",
-                                 "exposedPort": None,
-                                 "webapp": False,
-                                 "password": False,
-                                 "mountPoint": "/media/"}
-
-        self.images["hello-world"] = {"mountDefault": "None",
-                                      "validated": False,
-                                      "nickname": "Hello World!",
-                                      "exposedPort": None,
-                                      "webapp": False,
-                                      "password": False}
+        # read images properties from json file
+        with open('images.json', 'r') as fp:
+            self.images = json.load(fp)
 
 
 class Webpages(object):
@@ -178,6 +137,10 @@ class Webpages(object):
             if item != "image":
                 glob.images[image][item] = kwargs[item]
 
+        # save to json
+        with open('images.json', 'w') as fp:
+            json.dump(glob.images, fp)
+
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
@@ -224,17 +187,17 @@ class Webpages(object):
 
     # Questions when cloning an image
     def cloneImageinfo(self, **kwargs):
-        container_name, container_id = kwargs["name"], kwargs["id"]
+        image, container_name, container_id = kwargs["image"], kwargs["container_name"], kwargs["container_id"]
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
-        html_code += imageClone_layout(container_name=container_name, container_id=container_id)
+        html_code += imageClone_layout(image=image, container_name=container_name, container_id=container_id)
         html_code += footer_layout()
         return html_code
     cloneImageinfo.exposed = True
 
     def cloneImage(self, **kwargs):
-        dockerAPI.cloneImage(container_id=kwargs["container_id"], newimage=kwargs["newimage"], tag=kwargs["tag"])
+        dockerAPI.commitContainer(old_image=kwargs["old_image"], container_id=kwargs["container_id"], new_image=kwargs["new_image"], tag=kwargs["tag"])
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")

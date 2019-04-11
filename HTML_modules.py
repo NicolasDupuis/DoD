@@ -89,13 +89,13 @@ def dockerImages_layout(username, role):
 
         for i in range(len(images)):
             html_code += '''
-            <br><td><strong>''' + glob.images[str(images.loc[i][0])]["nickname"] + '''</strong></td>
+            <br><td><strong>''' + glob.images[str(images.loc[i][0])]["nickname"] + '''</strong> (''' + str(images.loc[i][0])  + ''')</td>
             <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
-            <tr><td> <img src="/static/''' + str(images.loc[i][0].replace("/","_")) + '''.jpg" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
+            <tr><td> <img src="''' + glob.images[images.loc[i][0]]["icon"] + '''" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
                 <td> Tag: ''' + str(images.loc[i][1]) + '''<br>
                      Created: ''' + str(images.loc[i][3]) + ''' <br>
                      Validated: ''' + str(glob.images[str(images.loc[i][0])]["validated"]) + ''' </td>
-                <td> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
+                <td><br> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
                      </a>
                      <a href="/imageLaunchPad?image=''' + str(images.loc[i][0]) + '''&mode=now">
@@ -178,27 +178,27 @@ def dockerImagesDetails_layout(role, image):
     if role == glob.roles[1]:  # admin
         disabled = ""
     else:
-        disabled = "disabled"
+        disabled = " disabled"
 
     html_code = '''<!-- !PAGE CONTENT! -->
       <div class="w3-main" style="margin-left:300px;margin-top:43px;">
         <!-- Header -->
         <header class="w3-container" style="padding-top:22px">
-          <h4><b><i class="fa fa-dashboard"></i> Details for image "''' + image + '''"</b></h4>
+        <h3></i> Details for image "''' + image + '''"</h3>
         </header>
-        <h3>App settings</h3>
-        <img src="/static/''' + str(image.replace("/", "_")) + '''.jpg" alt=Logo style="width:100px;border:0;">
+        <img src="''' + glob.images[image]["icon"] + '''" alt=Logo style="width:100px;border:0;">
+        <h4>App settings</h4>
         <form action ="/imageSettings" method=GET>
         <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
         <tr><td>Image name</td><td><input name = "image" value =''' + image + ''' ''' + disabled + ''' ></td></tr>'''
 
     for item in list(glob.images[image].keys()):
         html_code += '''<tr><td>''' + item + '''</td>
-                       <td><input name = "''' + item + '''" value=''' + str(glob.images[image][item]) + ''' ''' + disabled + '''
+                       <td><input name = "''' + item + '''" value=''' + str(glob.images[image][item]) + disabled + '''
                         </td></tr>'''
 
     html_code +=''' </table><br><input type=submit class="button" value="Update" ''' + disabled + '''></form>
-                    <br><h3>Docker low-level details</h3>
+                    <br><h4>Docker low-level details</h4>
                     <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                     <tr><th>Item</th><th>Value</th></tr><tr> '''
 
@@ -218,7 +218,8 @@ def dockerImagesDetails_layout(role, image):
 
     return html_code
 
-def imageClone_layout(container_name, container_id):
+def imageClone_layout(image, container_name, container_id):
+
     html_code = '''<!-- !PAGE CONTENT! -->
           <div class="w3-main" style="margin-left:300px;margin-top:43px;">
 
@@ -230,14 +231,13 @@ def imageClone_layout(container_name, container_id):
             '''
     html_code += '''<br><form action ="/cloneImage" method = GET> '''
     html_code += '''<table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white"> '''
-    html_code += ''' <tr><td>Container ID: </td><td><input name = "container_id" value = ''' + container_id + '''></td></tr> 
-                     <tr><td>New image name: </td><td><input name = "newimage"></td></tr>
+    html_code += '''<tr><td>Parent image: </td><td><input name = "old_image" value = ''' + image + '''></td></tr> 
+                    <tr><td>Container ID: </td><td><input name = "container_id" value = ''' + container_id + '''></td></tr> 
+                     <tr><td>New image name: </td><td><input name = "new_image"></td></tr>
                      <tr><td>New image tag: </td><td><input name = "tag" value="Latest"></td></tr>     
                      </table><br><input type=submit class="button" value="Clone !"> 
                     </form>'''
-
     return html_code
-
 
 
 ##########################################################################################################################################
@@ -261,43 +261,48 @@ def dockerInstances_layout(username, role):
       '''
 
     if len(instances) > 0:
-        html_code += '''<div class="w3-container">'''
 
         for i in range(len(instances)):
-            html_code += '''
-            
-            <br><td><strong>''' + str(instances.loc[i][1]) + '''</strong></td>
-            <table style="width:70%" class="w3-table w3-striped w3-bordered w3-border w3-white">
-            <tr><td> <img src="/static/''' + str(instances.loc[i][5].replace("/","_")) + '''.jpg" alt="''' + str(instances.loc[i][5]) + '''" style="width:100px;border:0;"> </td>
-                <td> ID: ''' + str(instances.loc[i][0][:12]) + '''<br>
-                     Image: ''' + str(instances.loc[i][5]) + '''<br> 
-                     Created: ''' + str(instances.loc[i][4]) + '''<br>
+
+            container_id = str(instances.loc[i][0][:12])
+            image = str(instances.loc[i][5])
+
+            volume = str(instances.loc[i][6]).split(":")[0]
+            if volume != "None":
+                volume = str(instances.loc[i][6]).split(":")[1][:-2]
+
+            html_code += '''<br><td><strong>''' + str(instances.loc[i][1]) + '''</strong></td>
+            <table style="width:80%" class="w3-table w3-striped w3-bordered w3-border w3-white">
+            <tr><td> <img src="''' + glob.images[image]["icon"] + '''" alt="''' + str(instances.loc[i][5]) + '''" style="width:100px;border:0;"> </td>
+                <td> Container ID: ''' + container_id + '''<br>
+                     Image: ''' + image + '''<br> 
+                     Created: ''' + str(instances.loc[i][4]).split(".")[0].replace("T", " at ") + '''<br>
                      Status: ''' + str(instances.loc[i][3]) + '''<br>
                      Port: ''' + str(instances.loc[i][2]) + '''<br>
-                     Mount: ''' + str(instances.loc[i][6]) + '''<br></td>
+                     Storage: ''' + volume + '''<br></td>
                 
-                <td> <a href="/actionsInstance?open=''' + str(instances.loc[i][0]) + '''">
+                <td> <br><a href="/actionsInstance?open=''' + container_id + '''">
                         <img src="/static/open.png" title = "Open" alt="open" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/actionsInstance?stop=''' + str(instances.loc[i][0]) + '''">
+                     <a href="/actionsInstance?stop=''' + container_id + '''">
                         <img src="/static/stop.jpg" title = "Stop" alt="stop" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/actionsInstance?pause=''' + str(instances.loc[i][0]) + '''">
+                     <a href="/actionsInstance?pause=''' + container_id + '''">
                         <img src="/static/pause.png" title = "Pause" alt="pause" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/actionsInstance?unpause=''' + str(instances.loc[i][0]) + '''">
+                     <a href="/actionsInstance?unpause=''' + container_id + '''">
                         <img src="/static/unpause.jpg" title = "Unpause" alt="unpause" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/actionsInstance?restart=''' + str(instances.loc[i][0]) + '''">
+                     <a href="/actionsInstance?restart=''' + container_id + '''">
                         <img src="/static/restart.jpg" title = "Restart" alt="restart" style="width:42px;height:42px;border:0;">
                      </a>                     
-                     <a href="/instanceDetails?container_id=''' + str(instances.loc[i][0]) + '''">
+                     <a href="/instanceDetails?container_id=''' + container_id + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
                      </a> 
-                    <a href="/cloneImageinfo?name=''' + str(instances.loc[i][5]) + '''&id= ''' + str(instances.loc[i][0][:12]) + '''">
+                    <a href="/cloneImageinfo?image=''' + image + '''&container_name=''' + str(instances.loc[i][1]) + '''&container_id= ''' + str(instances.loc[i][0][:12]) + '''">
                        <img src="/static/clone.png" title="Clone" alt="Clone" style="width:42px;height:42px;border:0;">
                     </a>
-                    </td></tr> </table></form><br> '''
+                    </td></tr> </table></form>'''
 
     else:
         html_code += '''<center><br><br><br><img src="/static/empty_box.jpg" alt="empty box"> '''
