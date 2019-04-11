@@ -107,7 +107,7 @@ def dockerImages_layout(username, role):
                      '''
                 
             if role == glob.roles[1]:  # admin
-                html_code += '''<a href="/deleteImage?image=''' + str(images.loc[i][0]) + '''">
+                html_code += ''' <a href="/deleteImage?image=''' + str(images.loc[i][0]) + '''">
                                    <img src="/static/delete.jpg" title="Delete" alt="details" style="width:42px;height:42px;border:0;">
                                  </a>  '''
 
@@ -218,6 +218,32 @@ def dockerImagesDetails_layout(role, image):
 
     return html_code
 
+def imageClone_layout(container_name, container_id):
+    html_code = '''<!-- !PAGE CONTENT! -->
+          <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+
+            <!-- Header -->
+            <header class="w3-container" style="padding-top:22px">
+              <h4><b><i class="fa fa-dashboard"></i> Docker image cloning factory</b></h4>
+            </header> 
+            <br> We're about to clone the current state of <strong>''' + container_name + ''' </strong> for you. Just a few questions first...<br>            
+            '''
+    html_code += '''<br><form action ="/cloneImage" method = GET> '''
+    html_code += '''<table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white"> '''
+    html_code += ''' <tr><td>Container ID: </td><td><input name = "container_id" value = ''' + container_id + '''></td></tr> 
+                     <tr><td>New image name: </td><td><input name = "newimage"></td></tr>
+                     <tr><td>New image tag: </td><td><input name = "tag" value="Latest"></td></tr>     
+                     </table><br><input type=submit class="button" value="Clone !"> 
+                    </form>'''
+
+    return html_code
+
+
+
+##########################################################################################################################################
+# Layouts for Docker Instances
+##########################################################################################################################################
+
 
 def dockerInstances_layout(username, role):
 
@@ -267,9 +293,11 @@ def dockerInstances_layout(username, role):
                      </a>                     
                      <a href="/instanceDetails?container_id=''' + str(instances.loc[i][0]) + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
-                     </a>   
-                </td></tr>                
-            </table></form><br> '''
+                     </a> 
+                    <a href="/cloneImageinfo?name=''' + str(instances.loc[i][5]) + '''&id= ''' + str(instances.loc[i][0][:12]) + '''">
+                       <img src="/static/clone.png" title="Clone" alt="Clone" style="width:42px;height:42px;border:0;">
+                    </a>
+                    </td></tr> </table></form><br> '''
 
     else:
         html_code += '''<center><br><br><br><img src="/static/empty_box.jpg" alt="empty box"> '''

@@ -11,7 +11,7 @@ def externalCmd(cmd):
 
 # Run external command
 def externalCmdLive(cmd):
-   # convert string into list of words
+    # convert string into list of words
     _cmd = [word for word in cmd.split(" ")]
     return subprocess.run(_cmd, stdout=subprocess.PIPE).stdout.decode('utf-8')
 
@@ -155,10 +155,7 @@ class Webpages(object):
         html_code  = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
-        if image != None:
-            html_code += dockerImages_layout(self.username, role=self.role,image=image)
-        else:
-            html_code += dockerImages_layout(self.username, role=self.role)
+        html_code += dockerImages_layout(self.username, role=self.role)
         html_code += footer_layout()
         return html_code
     dockerlibrary.exposed = True
@@ -224,6 +221,28 @@ class Webpages(object):
         html_code += footer_layout()
         return html_code
     imageLaunchPad.exposed = True
+
+    # Questions when cloning an image
+    def cloneImageinfo(self, **kwargs):
+        container_name, container_id = kwargs["name"], kwargs["id"]
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += imageClone_layout(container_name=container_name, container_id=container_id)
+        html_code += footer_layout()
+        return html_code
+    cloneImageinfo.exposed = True
+
+    def cloneImage(self, **kwargs):
+        dockerAPI.cloneImage(container_id=kwargs["container_id"], newimage=kwargs["newimage"], tag=kwargs["tag"])
+        html_code = header_layout()
+        html_code += topContainer_Layout()
+        html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
+        html_code += dockerImages_layout(self.username, role=self.role)
+        html_code += footer_layout()
+        return html_code
+    cloneImage.exposed = True
+
 
     # Display the details of a specific image
     def deleteImage(self, image):
@@ -429,5 +448,3 @@ if __name__ == '__main__':
 
     }
     cherrypy.quickstart(Webpages(), '/', conf)
-
-

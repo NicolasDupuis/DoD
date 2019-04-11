@@ -94,7 +94,6 @@ class DockerAPI(object):
         return pd.read_fwf(StringIO(self.stdout), widths=[20, 64])
 
     def pullImage(self, image):
-
         try:
             externalCmd(glob.terminal + "docker pull " + image)
         except:
@@ -136,6 +135,15 @@ class DockerAPI(object):
         except:
             pass
 
+    def cloneImage(self, container_id, newimage, tag):
+
+        # commit the container changes to a new image
+        externalCmd("docker commit " + container_id + " " + newimage + ":" + tag)
+
+        # inherit image properties
+        image = self.instanceDetails(container_id)["Config"][0]["Image"]
+        glob.images[newimage] = glob.images[image]
+
 
     # Instantiate an image
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
@@ -169,7 +177,7 @@ class DockerAPI(object):
 
         # placeholder for volume to mount
         if volume:
-            if volume in ["none", "default"]:
+            if volume == "None":
                 self.cmd_create = self.cmd_create.replace("<volume>", "")
             else:
                 self.cmd_create = self.cmd_create.replace("<volume>", "-v " + volume + ":" + mountPoint + " ")
@@ -225,7 +233,7 @@ class DockerAPI(object):
         if glob.images[image]["webapp"]:
             self.cmd_run = glob.internerBrowser + " http://127.0.0.1:" + str(self.port)
 
-            if image == "jupyter/scipy-notebook":
+            if image == "jupyter/scipy-notebook":  # ugly hardcode
                 self.cmd_run += "?token=abcd12345"
 
             print("[NOTE]: Run command: " + str(self.cmd_run))
