@@ -144,11 +144,16 @@ def imageLaunchPad_layout(image):
             '''
     # list available volumes for mounting
     listvolumes = "<option value = image=" + image + "&volume=none>None</option>"
-    listvolumes += "<option value = image=" + image + "&volume=none selected='selected'>None</option>"
-    listvolumes += "<option value = image=" + image + "&volume=default >Default</option>"
+    if glob.images[image]["mountDefault"] == "None":
+        listvolumes += "<option value = image=" + image + "&volume=none selected='selected'>None</option>"
+    else:
+        listvolumes += "<option value = image=" + image + "&volume=none >None</option>"
     volumes = dockerAPI.listVolumes()
     for i in range(len(volumes)):
-        listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + ">" + volumes.loc[i][1] + "</option>"
+        if glob.images[image]["mountDefault"] == volumes.loc[i][1]:
+            listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + " selected='selected'>" + volumes.loc[i][1] + "</option>"
+        else:
+            listvolumes += "<option value = image=" + image + "&volume=" + volumes.loc[i][1] + ">" + volumes.loc[i][1] + "</option>"
 
     html_code += '''<br><form action ="/actionsImage?run_''' + image + '''" method = GET> '''
     html_code += '''<table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white"> '''
@@ -156,7 +161,10 @@ def imageLaunchPad_layout(image):
     html_code += '''      <td>Do you need to mount a volume in your container? <br>
                           <select name = "run" size = "4" single ''' + listvolumes + '''</select>
                           <br>Where should we mount this volume? 
-                          <input name = "mountPoint" value= ''' + glob.images[image]["mountPoint"] + '''></td></tr>
+                          <input name = "mountPoint" value= ''' + glob.images[image]["mountPoint"] + '''>
+                          <br>
+                          <input type="checkbox" name="remember" value="True"> Remember my choice and make it my default<br>
+                          </td></tr>
                       <tr><td>Performance</td>
                           <td>Leave blank for default.<br>How many CPU: <input name = "cpu"> 
                           <br>Max memory (MB): <input name = "ram"></td></tr>

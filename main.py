@@ -49,14 +49,16 @@ class Glob(object):
         # Images details, to be controlled by the admin. Will end up in a database.
         self.images = {}
 
-        self.images["rocker/rstudio"] = {"validated": True,
+        self.images["rocker/rstudio"] = {"mountDefault": "None",
+                                         "validated": True,
                                          "password": True,
                                          "exposedPort": 8787,
                                          "webapp": True,
                                          "nickname": "Rstudio",
                                          "mountPoint": "/home/rstudio/"}
 
-        self.images["jupyter/scipy-notebook"] = {"validated": False,
+        self.images["jupyter/scipy-notebook"] = {"mountDefault": "None",
+                                                 "validated": False,
                                                  "exposedPort": 8888,
                                                  "webapp": True,
                                                  "password": False,
@@ -67,21 +69,24 @@ class Glob(object):
                                                  "addURL": "?token=<token>",
                                                  "nickname": "Jupyter"}
 
-        self.images["r-base"] = {"validated": False,
+        self.images["r-base"] = {"mountDefault": "None",
+                                 "validated": False,
                                  "nickname": "R",
                                  "exposedPort": None,
                                  "webapp": False,
                                  "password": False,
                                  "mountPoint": "/media/"}
 
-        self.images["alpine"] = {"validated": False,
+        self.images["alpine"] = {"mountDefault": "None",
+                                 "validated": False,
                                  "nickname": "Alpine",
                                  "exposedPort": None,
                                  "webapp": False,
                                  "password": False,
                                  "mountPoint": "/media/"}
 
-        self.images["hello-world"] = {"validated": False,
+        self.images["hello-world"] = {"mountDefault": "None",
+                                      "validated": False,
                                       "nickname": "Hello World!",
                                       "exposedPort": None,
                                       "webapp": False,
@@ -192,12 +197,25 @@ class Webpages(object):
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
+
+
         if mode == "configure":
             html_code += imageLaunchPad_layout(image=image)
-        elif mode == "now":
-            # create the image now
+
+        elif mode == "now":  # use default and create the image now
+
+            if glob.images[image]["mountDefault"] != "None":
+                volume = glob.images[image]["mountDefault"]
+                mountPoint = glob.images[image]["mountPoint"]
+            else:
+                volume = None
+                mountPoint = None
+
+            # run!
             dockerAPI.instantiatelImage(image,
                                         role=self.role,
+                                        volume=volume,
+                                        mountPoint=mountPoint,
                                         username=self.username,
                                         userpassword=self.userpassword)
 
@@ -232,12 +250,12 @@ class Webpages(object):
     # Actions on Docker images: remove, instantiate, pull
     def actionsImage(self, **kwargs):
 
-        print ("KWARGS: " + str(kwargs))
+        print("KWARGS: " + str(kwargs))
 
         # unpack parameters
         image = kwargs['run'].split("&")[0].split("=")[1]
         volume = kwargs['run'].split("&")[1].split("=")[1]
-        mountPoint = kwargs['mountPoint'] + volume
+        mountPoint = kwargs['mountPoint']
         cpu = kwargs['cpu']
         ram = kwargs['ram']
 
@@ -256,6 +274,17 @@ class Webpages(object):
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerInstances")
         html_code += dockerInstances_layout(self.username, role=self.role)
         html_code += footer_layout()
+
+        # user asked to remember the choice made.
+        try:
+            if kwargs["remember"] == "True":
+                glob.images[image]["mountPoint"] = mountPoint
+                glob.images[image]["mountDefault"] = volume
+
+                print(glob.images[image]["mountDefault"])
+                print(glob.images[image]["mountPoint"])
+        except:
+            pass
         return html_code
     actionsImage.exposed = True
 
