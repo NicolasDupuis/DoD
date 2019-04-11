@@ -93,8 +93,8 @@ def dockerImages_layout(username, role):
             <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
             <tr><td> <img src="/static/''' + str(images.loc[i][0].replace("/","_")) + '''.jpg" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
                 <td> Tag: ''' + str(images.loc[i][1]) + '''<br>
-                     Size: ''' + str(images.loc[i][3]) + '''<br>
-                     Created: ''' + str(images.loc[i][4]) + ''' </td>
+                     Created: ''' + str(images.loc[i][3]) + ''' <br>
+                     Validated: ''' + str(glob.images[str(images.loc[i][0])]["validated"]) + ''' </td>
                 <td> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
                      </a>

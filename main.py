@@ -49,7 +49,7 @@ class Glob(object):
         # Images details, to be controlled by the admin. Will end up in a database.
         self.images = {}
 
-        self.images["rocker/rstudio"] = {"validated": False,
+        self.images["rocker/rstudio"] = {"validated": True,
                                          "password": True,
                                          "exposedPort": 8787,
                                          "webapp": True,
