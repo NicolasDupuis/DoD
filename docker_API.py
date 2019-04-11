@@ -141,9 +141,9 @@ class DockerAPI(object):
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
 
         if glob.images[image]["webapp"] == True:
-            self.cmd_create = "docker run --name <userid>_<nickname><#n#> --rm <volume><GID>-dp <port><password> <CPU><RAM><image>"
+            self.cmd_create = "docker run --name <userid>_<nickname><#n#>--rm <volume>-dp <port><password><CPU><RAM><user><GID><image>"
         else:
-            self.cmd_create = glob.terminal + "docker run --name <userid>_<nickname><#n#> <volume>-ti --rm <image>"
+            self.cmd_create = glob.terminal + "docker run --name <userid>_<nickname><#n#><volume>-ti --rm <image>"
 
         # placeholder for container's future name: 3 parts (user ID, image nickname, increment integer)
         # 1) user ID
@@ -156,14 +156,14 @@ class DockerAPI(object):
         self.instances = dockerAPI.listInstances(role=role, username=username)
         self.instances = sorted([instance for instance in list(self.instances["Names"]) if glob.images[image]["nickname"] in instance])
         if len(self.instances) == 0:  # no container for this image yet
-            self.container_n = "-1"
+            self.container_n = "-1 "
         else:
-            self.container_n = "-" + str(int(self.instances[-1].split("-")[1]) + 1)
+            self.container_n = "-" + str(int(self.instances[-1].split("-")[1]) + 1) + " "
         self.cmd_create = self.cmd_create.replace("<#n#>", self.container_n)
 
         # placeholder for user password
         if glob.images[image]["password"]:
-            self.cmd_create = self.cmd_create.replace("<password>", "-e PASSWORD=" + userpassword)
+            self.cmd_create = self.cmd_create.replace("<password>", "-e PASSWORD=" + userpassword + " ")
         else:
             self.cmd_create = self.cmd_create.replace("<password>", "")
 
@@ -179,7 +179,7 @@ class DockerAPI(object):
         # placeholder for container defined port
         if glob.images[image]["exposedPort"]:
             self.port = getNewPort()
-            self.cmd_create = self.cmd_create.replace("<port>", str(self.port)+":"+str(glob.images[image]["exposedPort"]))
+            self.cmd_create = self.cmd_create.replace("<port>", str(self.port)+":"+str(glob.images[image]["exposedPort"]) + " ")
         else:
             self.cmd_create = self.cmd_create.replace("<port>", "")
 
@@ -196,10 +196,16 @@ class DockerAPI(object):
 
         # use a different GID
         try:
-            if glob.images[image]["GID"]:
-                self.cmd_create = self.cmd_create.replace("<GID>", "-e NB_GID=" + glob.images[image]["GID"] + " ")
+            if glob.images[image]["forceGID"]:
+                self.cmd_create = self.cmd_create.replace("<GID>", "-e NB_GID=" + glob.images[image]["forceGID"] + " ")
         except:
             self.cmd_create = self.cmd_create.replace("<GID>", "")
+
+        try:
+            if glob.images[image]["user"]:
+                self.cmd_create = self.cmd_create.replace("<user>", "--user " + glob.images[image]["user"] + " ")
+        except:
+            self.cmd_create = self.cmd_create.replace("<user>", "")
 
         # add stuff
         try:
@@ -246,8 +252,13 @@ class DockerAPI(object):
 
 
     def stopInstance(self, container_id):
-        # send SIGTERM signal, trying a gracefull shutdown. SIGKILL is sent after a grace period.
         try:
-            externalCmd("docker stop " + container_id + " && docker rm " + container_id)
+            # ask politely
+            externalCmd("docker stop " + container_id)
+            try:
+                # then stop asking...
+                externalCmd("docker rm " + container_id)
+            except:
+                pass
         except:
-            print("Couldn't stop")
+            pass

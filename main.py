@@ -61,7 +61,8 @@ class Glob(object):
                                                  "webapp": True,
                                                  "password": False,
                                                  "mountPoint": "/home/jovyan/",
-                                                 "GID": "1000",
+                                                 "forceGID": "1000",
+                                                 "user": "root",
                                                  "postadd": "start-notebook.sh --NotebookApp.token='abcd12345'",
                                                  "addURL": "?token=<token>",
                                                  "nickname": "Jupyter"}
