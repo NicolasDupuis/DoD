@@ -258,7 +258,7 @@ class DockerAPI(object):
             self.cmd_run = glob.internerBrowser + " http://127.0.0.1:" + str(self.port)
 
             if glob.images[image]["nickname"] == "Jupyter":  # ugly hardcode
-                self.cmd_run += "?token=abcd12345"
+                self.cmd_run += "?token=abcdef12345"
 
             print("[NOTE]: Run command: " + str(self.cmd_run))
             time.sleep(2)
