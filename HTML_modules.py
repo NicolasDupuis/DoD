@@ -75,47 +75,47 @@ def sidebar_layout(username, role, current):
 
 def dockerImages_layout(username, role):
     html_code = '''<!-- !PAGE CONTENT! -->
-      <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-      <!-- Header --><header class="w3-container" style="padding-top:22px">
-          <h4><b><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img> Docker images library</b></h4>
-        </header><br> '''
+      <div class="w3-main" style="margin-left:300px;margin-top:43px;"><br>
+      <h2><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img> Docker images library</h2>
+      <br> '''
 
-    images = dockerAPI.listImages()  # Dataframe with details on local docker images
+    # dataframes with Docker hub and user-defines images
+    images = dockerAPI.listImages()
 
-    if len(images) > 0:
+    dockerhubs = images[images["AUTHOR"] == "Docker hub"].reset_index().drop(['index'], axis=1)
+    userdefined = images[images["AUTHOR"] == username].reset_index().drop(['index'], axis=1)
 
-        html_code += '''</b2>Docker Hub images</b2><br>'''
+    # HTML code for docker hub images
+    html_code += '''<h4>Docker Hub images</h4><hr>'''
+    if len(dockerhubs) > 0:
+        for i in range(len(dockerhubs)):
+            nickname = glob.images[str(dockerhubs.loc[i][0])]["nickname"]
 
-        for i in range(len(images)):
             html_code += '''
-            <br><td><strong>''' + glob.images[str(images.loc[i][0])]["nickname"] + '''</strong> (''' + str(images.loc[i][0])  + ''')</td>
+            <td><strong>''' + nickname + '''</strong> (''' + str(dockerhubs.loc[i][0]) + ''')</td>
             <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
-            <tr><td> <img src="''' + glob.images[images.loc[i][0]]["icon"] + '''" alt="''' + str(images.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
-                <td> Tag: ''' + str(images.loc[i][1]) + '''<br>
-                     Created: ''' + str(images.loc[i][3]) + ''' <br>
-                     Validated: ''' + str(glob.images[str(images.loc[i][0])]["validated"]) + ''' </td>
-                <td><br> <a href="/imageDetails?image=''' + str(images.loc[i][0]) + '''">
+            <tr><td> <img src="''' + glob.images[dockerhubs.loc[i][0]]["icon"] + '''" alt="''' + str(dockerhubs.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
+                <td> Tag: ''' + str(dockerhubs.loc[i][1]) + '''<br>
+                     Created: ''' + str(dockerhubs.loc[i][3]) + ''' <br>
+                     Validated: ''' + str(glob.images[str(dockerhubs.loc[i][0])]["validated"]) + ''' </td>
+                <td><br> <a href="/imageDetails?image=''' + str(dockerhubs.loc[i][0]) + '''">
                         <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/imageLaunchPad?image=''' + str(images.loc[i][0]) + '''&mode=now">
+                     <a href="/imageLaunchPad?image=''' + str(dockerhubs.loc[i][0]) + '''&mode=now">
                         <img src="/static/run.jpg" title="Run" alt="Run now" title="Run now" style="width:42px;height:42px;border:0;">
                      </a>
-                     <a href="/imageLaunchPad?image=''' + str(images.loc[i][0]) + '''&mode=configure">
+                     <a href="/imageLaunchPad?image=''' + str(dockerhubs.loc[i][0]) + '''&mode=configure">
                         <img src="/static/run_configure.png" title="Configure and run" alt="Run" title="Configure and run" style="width:42px;height:42px;border:0;">
                      </a>
                      '''
-
             if role == glob.roles[1]:  # admin
-                html_code += ''' <a href="/deleteImage?image=''' + str(images.loc[i][0]) + '''">
+                html_code += ''' <a href="/deleteImage?image=''' + str(dockerhubs.loc[i][0]) + '''">
                                    <img src="/static/delete.jpg" title="Delete" alt="details" style="width:42px;height:42px;border:0;">
                                  </a>  '''
-
             html_code += "</td></tr>"
-            html_code += "</table>"
-
+            html_code += "</table><br>"
     else:
-        html_code += '''<center><br><br><br><img src="/static/empty_box.jpg" alt="empty box"> '''
-        html_code += "Sorry, no Docker images available...</center>"
+        html_code += '''<img src="/static/empty_box.jpg" alt="empty box" style="width:200px;border:0;"> '''
 
     if role == glob.roles[1]:  # admin
         html_code += ''' <br><br>
@@ -127,6 +127,35 @@ def dockerImages_layout(username, role):
            </table >
            </form>
            '''
+    # HTML code for user-defined images
+    html_code += '''<br><h4>User-defined images</h4><hr>'''
+    if len(userdefined) > 0:
+        for i in range(len(userdefined)):
+            html_code += '''
+                <td><strong>''' + glob.images[str(userdefined.loc[i][0])]["nickname"] + '''</strong> (''' + str(userdefined.loc[i][0]) + ''')</td>
+                <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
+                <tr><td> <img src="''' + glob.images[userdefined.loc[i][0]]["icon"] + '''" alt="''' + str(userdefined.loc[i][0]) + '''" style="width:100px;border:0;"> </td>
+                    <td> Tag: ''' + str(userdefined.loc[i][1]) + '''<br>
+                         Created: ''' + str(userdefined.loc[i][3]) + ''' <br>
+                         Validated: ''' + str(glob.images[str(userdefined.loc[i][0])]["validated"]) + ''' </td>
+                    <td><br> <a href="/imageDetails?image=''' + str(userdefined.loc[i][0]) + '''">
+                            <img src="/static/details.jpg" title = "Details" alt="details" style="width:42px;height:42px;border:0;">
+                         </a>
+                         <a href="/imageLaunchPad?image=''' + str(userdefined.loc[i][0]) + '''&mode=now">
+                            <img src="/static/run.jpg" title="Run" alt="Run now" title="Run now" style="width:42px;height:42px;border:0;">
+                         </a>
+                         <a href="/imageLaunchPad?image=''' + str(userdefined.loc[i][0]) + '''&mode=configure">
+                            <img src="/static/run_configure.png" title="Configure and run" alt="Run" title="Configure and run" style="width:42px;height:42px;border:0;">
+                         </a>
+                         <a href="/deleteImage?image=''' + str(userdefined.loc[i][0]) + '''">
+                                       <img src="/static/delete.jpg" title="Delete" alt="details" style="width:42px;height:42px;border:0;">
+                                     </a></td></tr></table><br>'''
+    else:
+        html_code += '''<img src="/static/empty_box.jpg" title="No images found" alt="empty box" style="width:200px;border:0;"> '''
+
+    if len(userdefined) + len(dockerhubs) == 0:
+        html_code += '''<center><br><img src="/static/empty_box.jpg" alt="empty box"> '''
+        html_code += "Sorry, no images available...</center>"
 
     return html_code
 

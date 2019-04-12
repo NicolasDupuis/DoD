@@ -26,7 +26,9 @@ class DockerAPI(object):
     def listImages(self):
         # Create a Dataframe listing all the docker images
         self.stdout = externalCmd("docker images")
-        return pd.read_fwf(StringIO(self.stdout), widths=[max(20, self.longestImageName()), 20, 20, 20, 20])
+        data = pd.read_fwf(StringIO(self.stdout), widths=[max(20, self.longestImageName()), 20, 20, 20, 20])
+        data["AUTHOR"] = data.apply(lambda row: glob.images[row["REPOSITORY"]]["author"], axis=1)
+        return data
 
     def imageDetails(self, image):
         # get image ID (for both hub's and cloned images)
@@ -76,7 +78,6 @@ class DockerAPI(object):
 
                 # ports
                 if glob.images[image]["exposedPort"]:
-                    print("Hello")
                     exposedPort = str(glob.images[image]["exposedPort"])
                     ports.append(details["HostConfig"][0]["PortBindings"][exposedPort + "/tcp"][0]["HostPort"])
                 else:
@@ -148,13 +149,13 @@ class DockerAPI(object):
         externalCmd("docker commit " + container_id + " " + new_image + ":" + tag)
 
         # inherit image properties
-        glob.images[new_image] = glob.images[old_image]
-        glob.images[new_image]["provenance"] = username + "_" + old_image
+        glob.images[new_image] = glob.images[old_image].copy()
+        glob.images[new_image]["author"] = username
+        glob.images[new_image]["parentImage"] = str(old_image)
 
         # save the image properties to a json file
         with open('images.json', 'w') as fp:
             json.dump(glob.images, fp)
-
 
     # Instantiate an image
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
