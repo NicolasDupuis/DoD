@@ -120,6 +120,13 @@ class DockerAPI(object):
         image_id = images[images["REPOSITORY"] == image].loc[0]["IMAGE ID"]
         externalCmd("docker rmi --force " + image_id)
 
+        # update global dictionnary
+        del glob.images[image]
+
+        # save the image properties to a json file
+        with open('images.json', 'w') as fp:
+            json.dump(glob.images, fp)
+
     def deleteVolume(self, volume):
         try:
             externalCmd("docker volume rm " + volume)
@@ -146,16 +153,24 @@ class DockerAPI(object):
 
     # commit the container changes to a new image
     def commitContainer(self, username, old_image, container_id, new_image, tag):
-        externalCmd("docker commit " + container_id + " " + new_image + ":" + tag)
 
-        # inherit image properties
-        glob.images[new_image] = glob.images[old_image].copy()
-        glob.images[new_image]["author"] = username
-        glob.images[new_image]["parentImage"] = str(old_image)
+        print(new_image)
+        # avoid underscores and spaces
+        new_image = new_image.replace(" ", "-")
+        new_image = new_image.replace("_", "-")
 
-        # save the image properties to a json file
-        with open('images.json', 'w') as fp:
-            json.dump(glob.images, fp)
+        # only do this if image doesn't exist already
+        if new_image not in list(glob.images.keys()):
+            externalCmd("docker commit " + container_id + " " + new_image + ":" + tag)
+
+            # inherit image properties
+            glob.images[new_image] = glob.images[old_image].copy()
+            glob.images[new_image]["author"] = username
+            glob.images[new_image]["parentImage"] = str(old_image)
+
+            # save the image properties to a json file
+            with open('images.json', 'w') as fp:
+                json.dump(glob.images, fp)
 
     # Instantiate an image
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
