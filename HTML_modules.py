@@ -76,16 +76,15 @@ def sidebar_layout(username, role, current):
 def dockerImages_layout(username, role):
     html_code = '''<!-- !PAGE CONTENT! -->
       <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-
-        <!-- Header -->
-        <header class="w3-container" style="padding-top:22px">
+      <!-- Header --><header class="w3-container" style="padding-top:22px">
           <h4><b><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img> Docker images library</b></h4>
-        </header> '''
+        </header><br> '''
 
     images = dockerAPI.listImages()  # Dataframe with details on local docker images
+
     if len(images) > 0:
 
-        html_code += ''' <br>Here is the list of the ''' + str(len(images)) + ''' docker local image(s) you can instantiate: <br>'''
+        html_code += '''</b2>Docker Hub images</b2><br>'''
 
         for i in range(len(images)):
             html_code += '''
@@ -105,7 +104,7 @@ def dockerImages_layout(username, role):
                         <img src="/static/run_configure.png" title="Configure and run" alt="Run" title="Configure and run" style="width:42px;height:42px;border:0;">
                      </a>
                      '''
-                
+
             if role == glob.roles[1]:  # admin
                 html_code += ''' <a href="/deleteImage?image=''' + str(images.loc[i][0]) + '''">
                                    <img src="/static/delete.jpg" title="Delete" alt="details" style="width:42px;height:42px;border:0;">
@@ -194,10 +193,10 @@ def dockerImagesDetails_layout(role, image):
 
     for item in list(glob.images[image].keys()):
         html_code += '''<tr><td>''' + item + '''</td>
-                       <td><input name = "''' + item + '''" value=''' + str(glob.images[image][item]) + disabled + '''
+                       <td><input name = "''' + item + '''" value="''' + str(glob.images[image][item]) + '''"''' + disabled + '''
                         </td></tr>'''
 
-    html_code +=''' </table><br><input type=submit class="button" value="Update" ''' + disabled + '''></form>
+    html_code +=''' </table><br><input type = submit class = "button" value = "Update" ''' + disabled + '''></form>
                     <br><h4>Docker low-level details</h4>
                     <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                     <tr><th>Item</th><th>Value</th></tr><tr> '''
@@ -322,6 +321,7 @@ def instanceDetails_layout(container_id):
      </tr><tr> '''
 
     details = dockerAPI.instanceDetails(container_id)  # get a dataframe
+
     for i in range(len(details.columns)):
         _items = ""
         if isinstance(details.loc[0][i], dict):

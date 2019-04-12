@@ -50,50 +50,50 @@ class DockerAPI(object):
     # Create a Dataframe listing all the docker instances
     def listInstances(self, role=None, username=None):
 
-        self.ids = []; self.names = []; self.ports = []; self.status = []; self.created = []; self.imagestoappend = []
-        self.mounts = []
+        ids = []; names = []; ports = []; status = []; created = []; imagestoappend = [] ; mounts = []
 
-        for self.instance in docker.from_env().containers.list():
-            self.instance = str(self.instance)
-            self.instance = self.instance.replace("<Container:", "")
-            self.instance = self.instance.replace(">", "")
+        for instance in docker.from_env().containers.list():
+            instance = str(instance)
+            instance = instance.replace("<Container:", "")
+            instance = instance.replace(">", "")
 
-            self.details = dockerAPI.instanceDetails(self.instance).to_dict()
+            details = dockerAPI.instanceDetails(instance).to_dict()
 
             # Admins: shows all containers. Users: only show theirs. If no info, show all
-            if not(role) or (role == glob.roles[1] or username in self.details["Name"][0][1:]):
+            if not(role) or (role == glob.roles[1] or username in details["Name"][0][1:]):
 
                 # container id
-                self.ids.append(self.details["Id"][0])
+                ids.append(details["Id"][0])
 
                 # names
-                self.names.append(self.details["Name"][0][1:])
+                names.append(details["Name"][0][1:])
 
                 # image
-                self.image_id = self.details["Config"][0]["Image"]
-                self.allimages = self.listImages()
-                self.image = list(self.allimages[self.allimages["IMAGE ID"] == self.image_id]["REPOSITORY"])[0]
-                self.imagestoappend.append(self.image)
+                image_id = details["Config"][0]["Image"]
+                allimages = self.listImages()
+                image = list(allimages[allimages["IMAGE ID"] == image_id]["REPOSITORY"])[0]
+                imagestoappend.append(image)
 
                 # ports
-                if glob.images[self.image]["exposedPort"] in ["True", True]:
-                    self.exposedPort = str(glob.images[self.image]["exposedPort"])
-                    self.ports.append(self.details["HostConfig"][0]["PortBindings"][self.exposedPort + "/tcp"][0]["HostPort"])
+                if glob.images[image]["exposedPort"]:
+                    print("Hello")
+                    exposedPort = str(glob.images[image]["exposedPort"])
+                    ports.append(details["HostConfig"][0]["PortBindings"][exposedPort + "/tcp"][0]["HostPort"])
                 else:
-                    self.ports.append("N/A")
+                    ports.append("N/A")
 
                 # status
-                self.status.append(self.details["State"][0]["Status"])
+                status.append(details["State"][0]["Status"])
 
                 # created
-                self.created.append(self.details["Created"][0])
+                created.append(details["Created"][0])
 
                 # mounted volumes
-                self.mounts.append(self.details["HostConfig"][0]["Binds"])
+                mounts.append(details["HostConfig"][0]["Binds"])
 
-        self.data = list(zip(self.ids, self.names, self.ports, self.status, self.created, self.imagestoappend, self.mounts))
+        data = list(zip(ids, names, ports, status, created, imagestoappend, mounts))
 
-        return pd.DataFrame(self.data, columns=['ID', 'Names', 'Ports', 'Status', 'Created', 'Images', 'Mounts'])
+        return pd.DataFrame(data, columns=['ID', 'Names', 'Ports', 'Status', 'Created', 'Images', 'Mounts'])
 
 
     def listVolumes(self):
@@ -115,13 +115,9 @@ class DockerAPI(object):
 
     def removeImage(self, image):
         # get image ID (for both hub's and cloned images)
-        self.images = dockerAPI.listImages()
-        self.image_id = self.images[self.images["REPOSITORY"] == image].loc[0]["IMAGE ID"]
-
-        try:
-            externalCmd("docker rmi --force " + image_id)
-        except:
-            pass
+        images = dockerAPI.listImages()
+        image_id = images[images["REPOSITORY"] == image].loc[0]["IMAGE ID"]
+        externalCmd("docker rmi --force " + image_id)
 
     def deleteVolume(self, volume):
         try:
@@ -147,15 +143,15 @@ class DockerAPI(object):
         except:
             pass
 
-    def commitContainer(self, old_image, container_id, new_image, tag):
-
-        # commit the container changes to a new image
+    # commit the container changes to a new image
+    def commitContainer(self, username, old_image, container_id, new_image, tag):
         externalCmd("docker commit " + container_id + " " + new_image + ":" + tag)
 
         # inherit image properties
         glob.images[new_image] = glob.images[old_image]
+        glob.images[new_image]["provenance"] = username + "_" + old_image
 
-        # save to json
+        # save the image properties to a json file
         with open('images.json', 'w') as fp:
             json.dump(glob.images, fp)
 
@@ -163,14 +159,9 @@ class DockerAPI(object):
     # Instantiate an image
     def instantiatelImage(self, image, role, username, userpassword, volume=None, mountPoint=None, cpu=None, ram=None):
 
-        # get image ID (for both hub's and cloned images)
-        self.images = dockerAPI.listImages()
-
         if glob.images[image]["webapp"] in ["True", True]:
-            print("Webapp")
             self.cmd_create = "docker run --name <userid>_<nickname><#n#>--rm <volume>-dp <port><password><CPU><RAM><user><GID><image>"
         else:
-            print("Terminal")
             self.cmd_create = glob.terminal + "docker run --name <userid>_<nickname><#n#><volume>-ti --rm <image>"
 
         # placeholder for container's future name: 3 parts (user ID, image nickname, increment integer)
@@ -242,12 +233,11 @@ class DockerAPI(object):
         except:
             pass
 
-        self.images = dockerAPI.listImages()
-        self.image_id = list(self.images[self.images["REPOSITORY"] == image]["IMAGE ID"])[0]
-        print("IMAGE_ID#2 " + str(self.image_id))
+        images = dockerAPI.listImages()
+        image_id = list(images[images["REPOSITORY"] == image]["IMAGE ID"])[0]
 
         # placeholder for image name
-        self.cmd_create = self.cmd_create.replace("<image>", self.image_id)
+        self.cmd_create = self.cmd_create.replace("<image>", image_id)
 
         # let's create this thing
         print("[NOTE]: Create command: " + str(self.cmd_create))

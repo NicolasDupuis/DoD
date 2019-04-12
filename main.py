@@ -197,7 +197,7 @@ class Webpages(object):
     cloneImageinfo.exposed = True
 
     def cloneImage(self, **kwargs):
-        dockerAPI.commitContainer(old_image=kwargs["old_image"], container_id=kwargs["container_id"], new_image=kwargs["new_image"], tag=kwargs["tag"])
+        dockerAPI.commitContainer(username=self.username, old_image=kwargs["old_image"], container_id=kwargs["container_id"], new_image=kwargs["new_image"], tag=kwargs["tag"])
         html_code = header_layout()
         html_code += topContainer_Layout()
         html_code += sidebar_layout(role=self.role, username=self.username, current="dockerlibrary")
