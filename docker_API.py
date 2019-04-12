@@ -153,10 +153,8 @@ class DockerAPI(object):
 
     # commit the container changes to a new image
     def commitContainer(self, username, old_image, container_id, new_image, tag):
-
-        print(new_image)
         # avoid underscores and spaces
-        new_image = new_image.replace(" ", "-")
+        new_image = new_image.replace(" ", "-").lower()
         new_image = new_image.replace("_", "-")
 
         # only do this if image doesn't exist already
