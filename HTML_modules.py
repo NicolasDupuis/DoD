@@ -43,9 +43,8 @@ def sidebar_layout(username, role, current):
 
     elif role == glob.roles[1]:  # admin
         sections = '<a href="dockerlibrary"   class="w3-bar-item w3-button w3-padding ' + color[0] + '"><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img>  Images library</a>'
-        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><img src = "./static/docker-icon.png" style="width:32px;border:0;"> </img>  Active containers</a>'
-        sections += '<a href="volumeslibrary" class="w3-bar-item w3-button w3-padding ' + color[2] + '"><i class="fa fa-users fa-fw"> </i>  Volumes library</a>'
-        sections += '<a href="usersMgmt" class="w3-bar-item w3-button w3-padding    ' + color[3] + '"><i class="fa fa-eye fa-fw"></i>  Users management</a>'
+        sections += '<a href="dockerInstances" class="w3-bar-item w3-button w3-padding ' + color[1] + '"><img src = "./static/docker-icon.png" style="width:32px;border:0;"></img>  Active containers</a>'
+        sections += '<a href="volumeslibrary" class="w3-bar-item w3-button w3-padding ' + color[2] + '"><img src = "./static/volume.png" style="width:32px;border:0;">Volumes library</a>'
 
     return '''
     <!-- Sidebar/menu -->
@@ -76,7 +75,7 @@ def sidebar_layout(username, role, current):
 def dockerImages_layout(username, role):
     html_code = '''<!-- !PAGE CONTENT! -->
       <div class="w3-main" style="margin-left:300px;margin-top:43px;"><br>
-      <h2><img src = "./static/hub-icon.png" style="width:25px;border:0;"></img> Docker images library</h2>
+      <h2><img src = "./static/hub-icon.png" style="width:50px;border:0;"></img>  Docker images library</h2>
       <br> '''
 
     # dataframes with Docker hub and user-defines images
@@ -210,12 +209,10 @@ def dockerImagesDetails_layout(role, image):
 
     html_code = '''<!-- !PAGE CONTENT! -->
       <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-        <!-- Header -->
-        <header class="w3-container" style="padding-top:22px">
-        <h3></i> Details for image "''' + image + '''"</h3>
-        </header>
-        <img src="''' + glob.images[image]["icon"] + '''" alt=Logo style="width:100px;border:0;">
-        <h4>App settings</h4>
+      <table style="width:60%" class="w3-table w3-striped w3-white">
+        <tr><td><h3>Details for image "''' + image + '''"</h3></td>
+                 <td><img src="''' + glob.images[image]["icon"] + '''" alt=Logo align="right" width="100"></td></tr></table>
+        <br><h4>App settings</h4><hr>
         <form action ="/imageSettings" method=GET>
         <table style="width:60%" class="w3-table w3-striped w3-bordered w3-border w3-white">
         <tr><td>Image name</td><td><input name = "image" value =''' + image + ''' ''' + disabled + ''' ></td></tr>'''
@@ -226,7 +223,7 @@ def dockerImagesDetails_layout(role, image):
                         </td></tr>'''
 
     html_code +=''' </table><br><input type = submit class = "button" value = "Update" ''' + disabled + '''></form>
-                    <br><h4>Docker low-level details</h4>
+                    <br><h4>Docker low-level details</h4><hr>
                     <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                     <tr><th>Item</th><th>Value</th></tr><tr> '''
 
@@ -279,14 +276,10 @@ def dockerInstances_layout(username, role):
     instances = dockerAPI.listInstances(role=role, username=username)
 
     # build HTML code
-    html_code = '''
-      <!-- !PAGE CONTENT! -->
-      <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-      <!-- Header -->
-      <header class="w3-container" style="padding-top:22px">
-       <h4><b><img src = "./static/docker-icon.png" style="width:32px;border:0;"> </img> Your active Docker containers</b></h4>
-      </header>
-      '''
+    html_code = '''<!-- !PAGE CONTENT! -->
+      <div class="w3-main" style="margin-left:300px;margin-top:43px;"><br>
+      <h2><img src = "./static/docker-icon.png" style="width:50px;border:0;"></img>  Your active Docker containers</h2>
+      <br> '''
 
     if len(instances) > 0:
 
@@ -371,7 +364,7 @@ def dockerInstanceDetails_layout(container_id):
 
             <!-- Header -->
             <header class="w3-container" style="padding-top:22px">
-              <h4><b><i class="fa fa-dashboard"></i> Details for active container "''' + container_id + '''"</b></h4>
+              <h2>Details for active container "''' + container_id + '''"</h2>
             </header>
             <div class="w3-container">
                <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
@@ -391,6 +384,10 @@ def dockerInstanceDetails_layout(container_id):
 
     return html_code
 
+##########################################################################################################################################
+# Layouts for Docker Volumes
+##########################################################################################################################################
+
 
 def dockerVolumes_layout():
 
@@ -398,14 +395,10 @@ def dockerVolumes_layout():
     volumes = dockerAPI.listVolumes()
 
     # build HTML code
-    html_code = '''
-      <!-- !PAGE CONTENT! -->
-      <div class="w3-main" style="margin-left:300px;margin-top:43px;">
-      <!-- Header -->
-      <header class="w3-container" style="padding-top:22px">
-       <h5><b><i class="fa fa-dashboard"></i> Docker volumes</b></h5>
-      </header>
-      '''
+    html_code = '''<!-- !PAGE CONTENT! -->
+      <div class="w3-main" style="margin-left:300px;margin-top:43px;"><br>
+      <h2><img src = "./static/volume.png" style="width:50px;border:0;"></img>  Docker volumes</h2>
+      <br> '''
 
     if len(volumes) > 0:
         html_code += '''
